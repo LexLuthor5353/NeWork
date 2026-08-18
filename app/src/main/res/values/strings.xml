@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">NeWork</string>
+    <string name="menu_posts">Посты</string>
+    <string name="menu_events">События</string>
+    <string name="menu_users">Пользователи</string>
+    <string name="posts_title">Экран постов</string>
+    <string name="events_title">Экран событий</string>
+    <string name="users_title">Экран пользователей</string>
+    <string name="posts_subtitle">Тут будет список постов и кнопка создания</string>
+    <string name="events_subtitle">Тут будет список событий и кнопка создания</string>
+    <string name="users_subtitle">Тут будет список пользователей</string>
+</resources>
