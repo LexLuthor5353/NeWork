@@ -6,7 +6,7 @@
     <string name="posts_title">Экран постов</string>
     <string name="events_title">Экран событий</string>
     <string name="users_title">Экран пользователей</string>
-    <string name="posts_subtitle">Тут будет список постов и кнопка создания</string>
-    <string name="events_subtitle">Тут будет список событий и кнопка создания</string>
-    <string name="users_subtitle">Тут будет список пользователей</string>
+    <string name="posts_subtitle">Тут будет список постов и кнопка создания когда нибудь очень скоро</string>
+    <string name="events_subtitle">Тут будет список событий и кнопка создания когда нибудь очень скоро</string>
+    <string name="users_subtitle">Тут будет список пользователей когда нибудь очень скоро</string>
 </resources>
