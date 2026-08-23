@@ -1,9 +1,28 @@
 package ru.netology.nework.feature.users
 
-import ru.netology.nework.R
-import ru.netology.nework.feature.common.SimpleListFragment
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.fragment.app.Fragment
+import ru.netology.nework.databinding.FragmentUsersBinding
 
-class UsersFragment : SimpleListFragment(
-    R.string.users_title,
-    R.string.users_subtitle
-)
+class UsersFragment : Fragment() {
+
+    private var _binding: FragmentUsersBinding? = null
+    private val binding get() = _binding!!
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentUsersBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+}

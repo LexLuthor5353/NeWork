@@ -10,7 +10,7 @@ import ru.netology.nework.databinding.FragmentPostDetailsBinding
 class PostDetailsFragment : Fragment() {
 
     private var _binding: FragmentPostDetailsBinding? = null
-    private val binding get() = requireNotNull(_binding)
+    private val binding get() = _binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -21,28 +21,8 @@ class PostDetailsFragment : Fragment() {
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        binding.author.text = arguments?.getString("author") ?: "Без имени"
-        binding.content.text = arguments?.getString("content") ?: ""
-        val likes = arguments?.getLong("likes") ?: 0
-        binding.likes.text = "Лайков: $likes"
-    }
-
     override fun onDestroyView() {
-        _binding = null
         super.onDestroyView()
-    }
-
-    companion object {
-        fun newInstance(author: String, content: String, likes: Long): PostDetailsFragment {
-            val fragment = PostDetailsFragment()
-            fragment.arguments = Bundle().apply {
-                putString("author", author)
-                putString("content", content)
-                putLong("likes", likes)
-            }
-            return fragment
-        }
+        _binding = null
     }
 }
