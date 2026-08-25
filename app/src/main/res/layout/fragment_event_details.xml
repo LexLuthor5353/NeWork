@@ -66,7 +66,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:textColor="@color/purple_700"
+            android:textColor="@color/green_dark"
             tools:text="@string/event_date" />
 
         <TextView
@@ -100,7 +100,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:textColor="@color/purple_500"
+            android:textColor="@color/green"
             android:visibility="gone"
             tools:text="@string/attachment_placeholder"
             tools:visibility="visible" />
@@ -110,7 +110,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:textColor="@color/purple_700"
+            android:textColor="@color/green_dark"
             android:visibility="gone"
             tools:text="@string/link_placeholder"
             tools:visibility="visible" />

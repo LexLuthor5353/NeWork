@@ -50,8 +50,8 @@
     <string name="link_placeholder">Ссылка</string>
     <string name="likes_count">0</string>
     <string name="author_name">Автор</string>
-    <string name="published_date">01.01.2024 12:00</string>
-    <string name="event_date">01.01.2024 18:00</string>
+    <string name="published_date">21.08.2026 10:00</string>
+    <string name="event_date">20.08.2026 11:00</string>
     <string name="user_login">login</string>
     <string name="user_name">Имя</string>
     <string name="post_content">Текст поста</string>
