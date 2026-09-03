@@ -2,14 +2,18 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/menu_posts"
-        android:icon="@android:drawable/ic_menu_agenda"
+        android:icon="@drawable/ic_nav_posts_24"
         android:title="@string/menu_posts" />
     <item
         android:id="@+id/menu_events"
-        android:icon="@android:drawable/ic_menu_my_calendar"
+        android:icon="@drawable/ic_nav_events_24"
         android:title="@string/menu_events" />
     <item
         android:id="@+id/menu_users"
-        android:icon="@android:drawable/ic_menu_search"
+        android:icon="@drawable/ic_nav_users_24"
         android:title="@string/menu_users" />
+    <item
+        android:id="@+id/menu_map"
+        android:icon="@drawable/ic_nav_map_24"
+        android:title="@string/menu_map" />
 </menu>

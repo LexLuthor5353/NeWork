@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "ru.netology.nework"
-        minSdk = 25
+        minSdk = 26
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
@@ -41,6 +41,17 @@ android {
     }
 }
 
+tasks.register<Copy>("copySecretsToAssets") {
+    val secretsFile = rootProject.file("secrets.properties")
+    from(secretsFile)
+    into(layout.projectDirectory.dir("src/main/assets"))
+    onlyIf { secretsFile.exists() }
+}
+
+tasks.named("preBuild") {
+    dependsOn("copySecretsToAssets")
+}
+
 dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
@@ -59,6 +70,9 @@ dependencies {
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.coordinatorlayout)
     implementation(libs.androidx.cardview)
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    implementation("com.yandex.android:maps.mobile:4.42.0-navikit")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)

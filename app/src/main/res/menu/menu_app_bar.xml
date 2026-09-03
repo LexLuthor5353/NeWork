@@ -2,17 +2,18 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+        android:id="@+id/actionProfile"
+        android:icon="@drawable/ic_profile_24"
+        android:title="@string/menu_profile"
+        app:showAsAction="always" />
+    <item
         android:id="@+id/actionLogin"
         android:title="@string/menu_login"
-        app:showAsAction="never" />
+        app:showAsAction="always" />
     <item
         android:id="@+id/actionRegister"
         android:title="@string/menu_register"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/actionProfile"
-        android:title="@string/menu_profile"
-        app:showAsAction="never" />
+        app:showAsAction="always" />
     <item
         android:id="@+id/actionLogout"
         android:title="@string/menu_logout"

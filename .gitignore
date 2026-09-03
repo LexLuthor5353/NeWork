@@ -13,4 +13,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+secrets.properties.example
+secrets.properties
+app/src/main/assets/secrets.properties
 .idea/

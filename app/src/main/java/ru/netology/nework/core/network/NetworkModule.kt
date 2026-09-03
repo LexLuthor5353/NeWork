@@ -8,6 +8,8 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import ru.netology.nework.core.config.AppSecrets
+import ru.netology.nework.core.session.PrefsTokenStore
 import ru.netology.nework.core.session.TokenStore
 import javax.inject.Singleton
 
@@ -17,18 +19,19 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideTokenStore(): TokenStore = ru.netology.nework.core.session.InMemoryTokenStore()
+    fun provideTokenStore(store: PrefsTokenStore): TokenStore = store
 
     @Provides
     @Singleton
     fun provideOkHttpClient(
-        tokenStore: TokenStore
+        tokenStore: TokenStore,
+        apiKeyInterceptor: ApiKeyInterceptor
     ): OkHttpClient {
         val logging = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BASIC
         }
         return OkHttpClient.Builder()
-            .addInterceptor(ApiKeyInterceptor())
+            .addInterceptor(apiKeyInterceptor)
             .addInterceptor(AuthInterceptor(tokenStore))
             .addInterceptor(logging)
             .build()
@@ -37,13 +40,19 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideRetrofit(
-        okHttpClient: OkHttpClient
+        okHttpClient: OkHttpClient,
+        appSecrets: AppSecrets
     ): Retrofit {
         return Retrofit.Builder()
-            .baseUrl(NetworkConfig.baseUrl)
+            .baseUrl(appSecrets.baseUrl)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
-}
 
+    @Provides
+    @Singleton
+    fun provideApiService(retrofit: Retrofit): ApiService {
+        return retrofit.create(ApiService::class.java)
+    }
+}

@@ -58,7 +58,8 @@
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/menu_edit"
-                android:src="@android:drawable/ic_menu_more" />
+                android:src="@drawable/ic_more_vert_24"
+                android:tint="@color/gray" />
         </LinearLayout>
 
         <TextView
@@ -85,7 +86,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:textColor="@color/green"
+            android:textColor="@color/purple_500"
             android:visibility="gone"
             tools:text="@string/attachment_placeholder"
             tools:visibility="visible" />
@@ -95,7 +96,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:textColor="@color/green_dark"
+            android:textColor="@color/purple_700"
             android:visibility="gone"
             tools:text="@string/link_placeholder"
             tools:visibility="visible" />
@@ -114,7 +115,8 @@
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/btn_like"
-                android:src="@android:drawable/btn_star_big_off" />
+                android:src="@drawable/ic_like_outlined_24"
+            android:tint="@color/gray" />
 
             <TextView
                 android:id="@+id/postDetailsLikeCount"

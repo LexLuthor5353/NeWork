@@ -1,38 +1,37 @@
 package ru.netology.nework.feature.events
 
+import android.content.Intent
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import ru.netology.nework.R
 import ru.netology.nework.core.model.Event
 import ru.netology.nework.core.model.EventType
-import ru.netology.nework.core.model.User
 import ru.netology.nework.databinding.FragmentEventsBinding
 
-class EventsFragment : Fragment() {
+@AndroidEntryPoint
+class EventsFragment : Fragment(R.layout.fragment_events) {
 
     private var _binding: FragmentEventsBinding? = null
     private val binding get() = _binding!!
-
-    lateinit var adapter: EventsAdapter
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentEventsBinding.inflate(inflater, container, false)
-        return binding.root
-    }
+    private val viewModel: EventsViewModel by viewModels()
+    private lateinit var adapter: EventsAdapter
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentEventsBinding.bind(view)
 
-        val data = getTestEvents()
-        adapter = EventsAdapter(data) { event ->
+        adapter = EventsAdapter(
+            events = emptyList(),
+            onEventClick = { event ->
             val fragment = EventDetailsFragment()
             val arguments = Bundle()
             arguments.putString("author", event.author?.name ?: "без имени")
@@ -59,7 +58,11 @@ class EventsFragment : Fragment() {
                 .replace(R.id.container, fragment)
                 .addToBackStack(null)
                 .commit()
-        }
+            },
+            onShareClick = { event ->
+                shareEvent(event)
+            }
+        )
 
         binding.eventsList.layoutManager = LinearLayoutManager(requireContext())
         binding.eventsList.adapter = adapter
@@ -70,46 +73,61 @@ class EventsFragment : Fragment() {
                 .addToBackStack("edit")
                 .commit()
         }
+
+        binding.eventsRefresh.setColorSchemeResources(R.color.purple_500)
+        binding.eventsRefresh.setOnRefreshListener {
+            viewModel.loadEvents()
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.events.collect { events ->
+                    adapter.updateEvents(events)
+                    binding.eventsList.isVisible = events.isNotEmpty()
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.loading.collect { loading ->
+                    binding.eventsProgress.isVisible = loading && adapter.itemCount == 0
+                    binding.eventsRefresh.isRefreshing = loading && adapter.itemCount > 0
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.errorMessage.collect { message ->
+                    if (message != null) {
+                        binding.eventsError.visibility = View.VISIBLE
+                        binding.eventsError.text = message
+                    } else {
+                        binding.eventsError.visibility = View.GONE
+                    }
+                }
+            }
+        }
     }
 
-    fun getTestEvents(): List<Event> {
-        val currentTime = System.currentTimeMillis()
-        val events = ArrayList<Event>()
-        events.add(
-            Event(
-                "1",
-                User("1", "ivan", "Иван", null),
-                currentTime,
-                currentTime + 1000 * 60 * 60 * 24,
-                EventType.ONLINE,
-                "Митап по android",
-                null,
-                null,
-                null,
-                emptyList(),
-                emptyList(),
-                4,
-                false
-            )
-        )
-        events.add(
-            Event(
-                "2",
-                User("2", "anna", "Анна", null),
-                currentTime - 50000,
-                currentTime + 1000 * 60 * 60 * 48,
-                EventType.OFFLINE,
-                "Встреча в офисе",
-                "https://netology.ru",
-                null,
-                null,
-                emptyList(),
-                emptyList(),
-                10,
-                true
-            )
-        )
-        return events
+    private fun shareEvent(event: Event) {
+        val author = event.author?.name ?: ""
+        val text = buildString {
+            if (author.isNotEmpty()) {
+                append(author)
+                append("\n")
+            }
+            append(event.content)
+            if (!event.link.isNullOrBlank()) {
+                append("\n")
+                append(event.link)
+            }
+        }
+        val intent = Intent(Intent.ACTION_SEND)
+        intent.type = "text/plain"
+        intent.putExtra(Intent.EXTRA_TEXT, text)
+        startActivity(Intent.createChooser(intent, getString(R.string.btn_share)))
     }
 
     override fun onDestroyView() {

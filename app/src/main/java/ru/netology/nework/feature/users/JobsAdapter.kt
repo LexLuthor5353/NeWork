@@ -46,4 +46,9 @@ class JobsAdapter(
 
         holder.binding.jobActions.visibility = android.view.View.GONE
     }
+
+    fun updateJobs(newJobs: List<Job>) {
+        jobs = newJobs
+        notifyDataSetChanged()
+    }
 }

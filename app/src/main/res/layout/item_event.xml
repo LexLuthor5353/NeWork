@@ -1,105 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/eventCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="2dp">
+    android:background="@color/white">
 
-    <LinearLayout
-        android:id="@+id/eventCardContent"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="12dp">
+        <ImageView
+            android:id="@+id/eventAvatar"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="12dp"
+            android:contentDescription="@string/author_name"
+            android:scaleType="centerCrop"
+            android:src="@drawable/bg_avatar"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <LinearLayout
-            android:id="@+id/eventHeader"
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/eventAuthorName"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@id/eventMenuButton"
+            app:layout_constraintStart_toEndOf="@id/eventAvatar"
+            app:layout_constraintTop_toTopOf="@id/eventAvatar"
+            tools:text="@string/author_name" />
 
-            <ImageView
-                android:id="@+id/eventAvatar"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:contentDescription="@string/author_name"
-                android:scaleType="centerCrop"
-                android:src="@drawable/bg_avatar" />
+        <TextView
+            android:id="@+id/eventPublished"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginEnd="8dp"
+            android:textColor="@color/gray"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toStartOf="@id/eventMenuButton"
+            app:layout_constraintStart_toEndOf="@id/eventAvatar"
+            app:layout_constraintTop_toBottomOf="@id/eventAuthorName"
+            tools:text="@string/published_date" />
 
-            <LinearLayout
-                android:id="@+id/eventAuthorBlock"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_weight="1"
-                android:orientation="vertical">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/eventMenuButton"
+            style="@style/Widget.NeWork.MenuButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:contentDescription="@string/menu_edit"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-                <TextView
-                    android:id="@+id/eventAuthorName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/black"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    tools:text="@string/author_name" />
-
-                <TextView
-                    android:id="@+id/eventPublished"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/gray"
-                    android:textSize="12sp"
-                    tools:text="@string/published_date" />
-            </LinearLayout>
-
-            <ImageButton
-                android:id="@+id/eventMenuButton"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/menu_edit"
-                android:src="@android:drawable/ic_menu_more" />
-        </LinearLayout>
+        <androidx.constraintlayout.widget.Barrier
+            android:id="@+id/eventHeaderBarrier"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:barrierDirection="bottom"
+            app:constraint_referenced_ids="eventAvatar,eventPublished,eventMenuButton" />
 
         <TextView
             android:id="@+id/eventDate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
-            android:textColor="@color/green_dark"
+            android:textColor="@color/purple_700"
             android:textSize="13sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/eventHeaderBarrier"
             tools:text="@string/event_date" />
 
         <TextView
             android:id="@+id/eventType"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
             android:layout_marginTop="4dp"
+            android:textColor="@color/gray"
             android:textSize="13sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/eventDate"
             tools:text="@string/event_type_online" />
 
         <TextView
             android:id="@+id/eventText"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
             android:layout_marginTop="10dp"
+            android:layout_marginEnd="16dp"
+            android:textColor="@color/black"
             android:textSize="15sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/eventType"
             tools:text="@string/event_content" />
 
         <ImageView
             android:id="@+id/eventAttachmentImage"
-            android:layout_width="match_parent"
-            android:layout_height="180dp"
-            android:layout_marginTop="8dp"
+            android:layout_width="0dp"
+            android:layout_height="200dp"
+            android:layout_marginTop="12dp"
             android:background="@drawable/bg_attachment"
             android:contentDescription="@string/attachment_placeholder"
             android:scaleType="centerCrop"
             android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/eventText"
             tools:visibility="visible" />
 
         <TextView
@@ -107,8 +120,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:textColor="@color/green"
+            android:textColor="@color/purple_500"
             android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/eventText"
             tools:text="@string/attachment_placeholder"
             tools:visibility="visible" />
 
@@ -117,34 +132,64 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:textColor="@color/green_dark"
+            android:textColor="@color/purple_700"
             android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/eventAttachmentImage"
             tools:text="@string/link_placeholder"
             tools:visibility="visible" />
 
-        <LinearLayout
-            android:id="@+id/eventActions"
-            android:layout_width="match_parent"
+        <androidx.constraintlayout.widget.Barrier
+            android:id="@+id/eventContentBarrier"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            app:barrierDirection="bottom"
+            app:constraint_referenced_ids="eventText,eventAttachmentImage,eventAttachmentLabel,eventLink" />
 
-            <ImageButton
-                android:id="@+id/eventLikeButton"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/btn_like"
-                android:src="@android:drawable/btn_star_big_off" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/eventLikeButton"
+            style="@style/Widget.NeWork.LikeButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="4dp"
+            android:checkable="true"
+            android:contentDescription="@string/btn_like"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/eventContentBarrier"
+            tools:text="@string/likes_count" />
 
-            <TextView
-                android:id="@+id/eventLikeCount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:textSize="14sp"
-                tools:text="@string/likes_count" />
-        </LinearLayout>
-    </LinearLayout>
-</androidx.cardview.widget.CardView>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/eventShareButton"
+            style="@style/Widget.NeWork.ActionButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/btn_share"
+            app:icon="@drawable/ic_share_24"
+            app:layout_constraintStart_toEndOf="@id/eventLikeButton"
+            app:layout_constraintTop_toTopOf="@id/eventLikeButton"
+            tools:text="@string/shares_count" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/eventViewsButton"
+            style="@style/Widget.NeWork.ActionButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="12dp"
+            android:contentDescription="@string/btn_views"
+            app:icon="@drawable/ic_views_24"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/eventLikeButton"
+            tools:text="@string/views_count" />
+
+    <View
+        android:id="@+id/eventDivider"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginTop="8dp"
+        android:background="@color/divider"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/eventLikeButton" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

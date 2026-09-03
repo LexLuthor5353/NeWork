@@ -1,8 +1,12 @@
 package ru.netology.nework.feature.events
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import ru.netology.nework.R
+import ru.netology.nework.core.model.AttachmentType
 import ru.netology.nework.core.model.Event
 import ru.netology.nework.core.model.EventType
 import ru.netology.nework.databinding.ItemEventBinding
@@ -12,7 +16,8 @@ import java.util.Locale
 
 class EventsAdapter(
     private var events: List<Event>,
-    private val onEventClick: (Event) -> Unit
+    private val onEventClick: (Event) -> Unit,
+    private val onShareClick: (Event) -> Unit = {}
 ) : RecyclerView.Adapter<EventsAdapter.EventHolder>() {
 
     private val dateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
@@ -47,20 +52,56 @@ class EventsAdapter(
             holder.binding.eventType.text = "Offline"
         }
         holder.binding.eventText.text = event.content
-        holder.binding.eventLikeCount.text = (event.likeOwnerIdsCount ?: 0).toString()
+        holder.binding.eventLikeButton.text = (event.likeOwnerIdsCount ?: 0).toString()
+        holder.binding.eventLikeButton.isChecked = event.likedByMe == true
+        holder.binding.eventShareButton.text = ""
+        holder.binding.eventViewsButton.visibility = View.GONE
 
-        if (event.link != null && event.link != "") {
-            holder.binding.eventLink.visibility = android.view.View.VISIBLE
-            holder.binding.eventLink.text = event.link
+        val avatarUrl = event.author?.avatarUrl
+        if (avatarUrl != null && avatarUrl.isNotEmpty()) {
+            Glide.with(holder.binding.eventAvatar.context)
+                .load(avatarUrl)
+                .placeholder(R.drawable.bg_avatar)
+                .circleCrop()
+                .into(holder.binding.eventAvatar)
         } else {
-            holder.binding.eventLink.visibility = android.view.View.GONE
+            holder.binding.eventAvatar.setImageResource(R.drawable.bg_avatar)
         }
 
-        holder.binding.eventAttachmentImage.visibility = android.view.View.GONE
-        holder.binding.eventAttachmentLabel.visibility = android.view.View.GONE
+        if (event.link != null && event.link != "") {
+            holder.binding.eventLink.visibility = View.VISIBLE
+            holder.binding.eventLink.text = event.link
+        } else {
+            holder.binding.eventLink.visibility = View.GONE
+        }
+
+        val attachment = event.attachment
+        if (attachment != null && attachment.type == AttachmentType.IMAGE && attachment.url != null) {
+            holder.binding.eventAttachmentImage.visibility = View.VISIBLE
+            holder.binding.eventAttachmentLabel.visibility = View.GONE
+            Glide.with(holder.binding.eventAttachmentImage.context)
+                .load(attachment.url)
+                .into(holder.binding.eventAttachmentImage)
+        } else if (attachment != null) {
+            holder.binding.eventAttachmentImage.visibility = View.GONE
+            holder.binding.eventAttachmentLabel.visibility = View.VISIBLE
+            holder.binding.eventAttachmentLabel.text = attachment.type.name
+        } else {
+            holder.binding.eventAttachmentImage.visibility = View.GONE
+            holder.binding.eventAttachmentLabel.visibility = View.GONE
+        }
+
+        holder.binding.eventShareButton.setOnClickListener {
+            onShareClick(event)
+        }
 
         holder.binding.root.setOnClickListener {
             onEventClick(event)
         }
+    }
+
+    fun updateEvents(newEvents: List<Event>) {
+        events = newEvents
+        notifyDataSetChanged()
     }
 }

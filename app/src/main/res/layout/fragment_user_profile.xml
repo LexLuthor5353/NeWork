@@ -42,6 +42,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:text="@string/btn_add_job"
+        android:textColor="@color/purple_500"
         android:visibility="gone"
         tools:visibility="visible" />
 
@@ -50,16 +51,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
+        app:tabIndicatorColor="@color/purple_500"
+        app:tabSelectedTextColor="@color/purple_500"
+        app:tabTextColor="@color/gray"
         app:tabMode="fixed">
 
         <com.google.android.material.tabs.TabItem
-            android:id="@+id/userProfileTabWall"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/tab_wall" />
 
         <com.google.android.material.tabs.TabItem
-            android:id="@+id/userProfileTabJobs"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/tab_jobs" />

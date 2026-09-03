@@ -1,49 +1,57 @@
 package ru.netology.nework.feature.users
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.bumptech.glide.Glide
 import com.google.android.material.tabs.TabLayout
-import ru.netology.nework.core.model.Job
-import ru.netology.nework.core.model.Post
-import ru.netology.nework.core.model.User
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import ru.netology.nework.R
 import ru.netology.nework.databinding.FragmentUserProfileBinding
 import ru.netology.nework.feature.posts.PostsAdapter
+import javax.inject.Inject
 
-class UserProfileFragment : Fragment() {
+@AndroidEntryPoint
+class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
 
     private var _binding: FragmentUserProfileBinding? = null
     private val binding get() = _binding!!
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentUserProfileBinding.inflate(inflater, container, false)
-        return binding.root
-    }
+    @Inject
+    lateinit var usersRepository: UsersRepository
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentUserProfileBinding.bind(view)
 
         val name = arguments?.getString("name") ?: "без имени"
         val login = arguments?.getString("login") ?: ""
         val userId = arguments?.getString("userId") ?: ""
+        val avatar = arguments?.getString("avatar")
 
         binding.userProfileName.text = name
         binding.userProfileLogin.text = login
 
-        val wallPosts = getWallPosts(userId, name, login)
-        val wallAdapter = PostsAdapter(wallPosts) { }
+        if (avatar != null && avatar.isNotEmpty()) {
+            Glide.with(this)
+                .load(avatar)
+                .placeholder(R.drawable.bg_avatar)
+                .into(binding.userProfileAvatar)
+        }
+
+        val wallAdapter = PostsAdapter(
+            posts = emptyList(),
+            onPostClick = {},
+            onShareClick = {}
+        )
         binding.userProfileWallList.layoutManager = LinearLayoutManager(requireContext())
         binding.userProfileWallList.adapter = wallAdapter
 
-        val jobs = getTestJobs(userId)
-        val jobsAdapter = JobsAdapter(jobs)
+        val jobsAdapter = JobsAdapter(emptyList())
         binding.userProfileJobsList.layoutManager = LinearLayoutManager(requireContext())
         binding.userProfileJobsList.adapter = jobsAdapter
 
@@ -64,55 +72,24 @@ class UserProfileFragment : Fragment() {
             override fun onTabReselected(tab: TabLayout.Tab) {
             }
         })
-    }
 
-    private fun getWallPosts(userId: String, name: String, login: String): List<Post> {
-        val currentTime = System.currentTimeMillis()
-        val posts = ArrayList<Post>()
-        val author = User(userId, login, name, null)
-        posts.add(
-            Post(
-                userId,
-                author,
-                currentTime,
-                "Пост на стене пользователя " + name,
-                null,
-                null,
-                null,
-                emptyList(),
-                1,
-                false
-            )
-        )
-        return posts
-    }
-
-    private fun getTestJobs(userId: String): List<Job> {
-        val jobs = ArrayList<Job>()
-        if (userId == "1") {
-            jobs.add(
-                Job(
-                    "1",
-                    "Яндекс",
-                    "Android разработчик",
-                    "https://yandex.ru",
-                    System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 365,
-                    null
-                )
-            )
-        } else if (userId == "2") {
-            jobs.add(
-                Job(
-                    "2",
-                    "Сбер",
-                    "Тестировщик",
-                    null,
-                    System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 500,
-                    System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 100
-                )
-            )
+        if (userId.isNotEmpty()) {
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    val wallPosts = usersRepository.loadUserWall(userId)
+                    wallAdapter.updatePosts(wallPosts)
+                    binding.userProfileWallList.isVisible = wallPosts.isNotEmpty()
+                } catch (exception: Exception) {
+                }
+            }
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    val jobs = usersRepository.loadUserJobs(userId)
+                    jobsAdapter.updateJobs(jobs)
+                } catch (exception: Exception) {
+                }
+            }
         }
-        return jobs
     }
 
     override fun onDestroyView() {

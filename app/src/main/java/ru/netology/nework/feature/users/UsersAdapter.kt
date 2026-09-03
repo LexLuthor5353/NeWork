@@ -3,6 +3,8 @@ package ru.netology.nework.feature.users
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import ru.netology.nework.R
 import ru.netology.nework.core.model.User
 import ru.netology.nework.databinding.ItemUserBinding
 
@@ -31,8 +33,23 @@ class UsersAdapter(
         }
         holder.binding.userLogin.text = user.login
 
+        val avatarUrl = user.avatarUrl
+        if (avatarUrl != null && avatarUrl.isNotEmpty()) {
+            Glide.with(holder.binding.userAvatar.context)
+                .load(avatarUrl)
+                .placeholder(R.drawable.bg_avatar)
+                .into(holder.binding.userAvatar)
+        } else {
+            holder.binding.userAvatar.setImageResource(R.drawable.bg_avatar)
+        }
+
         holder.binding.root.setOnClickListener {
             onUserClick(user)
         }
+    }
+
+    fun updateUsers(newUsers: List<User>) {
+        users = newUsers
+        notifyDataSetChanged()
     }
 }
