@@ -21,44 +21,38 @@ import java.time.Instant
 fun PostDto.toPost(): Post {
     return Post(
         id = id.toString(),
-        author = User(
-            id = authorId.toString(),
-            login = "",
-            name = author,
-            avatarUrl = authorAvatar
-        ),
-        publishedAt = parseDate(published),
+        authorId = authorId.toString(),
+        authorName = author,
+        authorAvatarUrl = authorAvatar,
+        authorJob = authorJob,
         content = content,
+        publishedAt = parseDate(published),
         link = link,
         attachment = attachment?.toAttachment(),
-        coords = coords?.toCoordinates(),
         mentionedUserIds = mentionIds.map { it.toString() },
+        likeOwnerIds = likeOwnerIds.map { it.toString() },
         likeOwnerIdsCount = likeOwnerIds.size.toLong(),
         likedByMe = likedByMe
     )
 }
 
 fun EventDto.toEvent(): Event {
-    val eventType = if (type == EventTypeDto.ONLINE) {
-        EventType.ONLINE
-    } else {
-        EventType.OFFLINE
+    val eventType = when (type) {
+        EventTypeDto.ONLINE -> EventType.ONLINE
+        EventTypeDto.OFFLINE -> EventType.OFFLINE
     }
     return Event(
         id = id.toString(),
-        author = User(
-            id = authorId.toString(),
-            login = "",
-            name = author,
-            avatarUrl = authorAvatar
-        ),
+        authorId = authorId.toString(),
+        authorName = author,
+        authorAvatarUrl = authorAvatar,
+        authorJob = authorJob,
+        content = content,
         publishedAt = parseDate(published),
         eventAt = parseDate(datetime),
         type = eventType,
-        content = content,
         link = link,
         attachment = attachment?.toAttachment(),
-        coords = coords?.toCoordinates(),
         participantIds = participantsIds.map { it.toString() },
         speakerIds = speakerIds.map { it.toString() },
         likeOwnerIdsCount = likeOwnerIds.size.toLong(),

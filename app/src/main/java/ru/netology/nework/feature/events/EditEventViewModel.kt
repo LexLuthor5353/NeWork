@@ -1,4 +1,4 @@
-package ru.netology.nework.feature.posts
+package ru.netology.nework.feature.events
 
 import android.content.Context
 import android.net.Uri
@@ -11,12 +11,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import ru.netology.nework.core.network.ApiService
 import ru.netology.nework.core.network.dto.AttachmentDto
-import ru.netology.nework.core.network.dto.PostCreateDto
+import ru.netology.nework.core.network.dto.EventCreateDto
 import ru.netology.nework.core.util.FilePartUtils
 import javax.inject.Inject
 
 @HiltViewModel
-class EditPostViewModel @Inject constructor(
+class EditEventViewModel @Inject constructor(
     private val apiService: ApiService,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
@@ -32,10 +32,12 @@ class EditPostViewModel @Inject constructor(
 
     private val MAX_ATTACHMENT_SIZE = 15L * 1024 * 1024
 
-    fun savePost(
+    fun saveEvent(
         content: String,
         attachmentUri: Uri? = null,
-        mentionUserIds: List<String> = emptyList()
+        type: String = "ONLINE",
+        eventDateMillis: Long? = null,
+        speakerUserIds: List<String> = emptyList()
     ) {
         viewModelScope.launch {
             _loading.value = true
@@ -65,12 +67,19 @@ class EditPostViewModel @Inject constructor(
                         type = FilePartUtils.getAttachmentType(mimeType)
                     )
                 }
-                val mentionIds = mentionUserIds.mapNotNull { it.toLongOrNull() }
-                val response = apiService.createPost(
-                    PostCreateDto(
+                val speakerIds = speakerUserIds.mapNotNull { it.toLongOrNull() }
+                val datetimeStr = if (eventDateMillis != null) {
+                    java.time.Instant.ofEpochMilli(eventDateMillis).toString()
+                } else {
+                    null
+                }
+                val response = apiService.createEvent(
+                    EventCreateDto(
                         content = content,
+                        type = type,
+                        datetime = datetimeStr,
                         attachment = attachment,
-                        mentionIds = mentionIds
+                        speakerIds = speakerIds
                     )
                 )
                 if (!response.isSuccessful) {
@@ -78,7 +87,7 @@ class EditPostViewModel @Inject constructor(
                 }
                 _saved.value = true
             } catch (exception: Exception) {
-                _errorMessage.value = exception.message ?: "не удалось сохранить пост"
+                _errorMessage.value = exception.message ?: "не удалось сохранить событие"
             }
             _loading.value = false
         }

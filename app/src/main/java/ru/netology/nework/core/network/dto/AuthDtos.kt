@@ -17,7 +17,9 @@ data class PostCreateDto(
     @SerializedName("link")
     val link: String? = null,
     @SerializedName("attachment")
-    val attachment: AttachmentDto? = null
+    val attachment: AttachmentDto? = null,
+    @SerializedName("mentionIds")
+    val mentionIds: List<Long> = emptyList()
 )
 
 data class UploadResponseDto(

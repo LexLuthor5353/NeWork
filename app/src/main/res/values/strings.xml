@@ -63,6 +63,7 @@
     <string name="attachment_placeholder">Вложение</string>
     <string name="link_placeholder">Ссылка</string>
     <string name="likes_count">0</string>
+    <string name="liked_by">Нравится</string>
     <string name="shares_count">0</string>
     <string name="views_count">0</string>
     <string name="author_name">Автор</string>

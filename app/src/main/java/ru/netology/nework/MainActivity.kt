@@ -192,6 +192,7 @@ class MainActivity : AppCompatActivity() {
                 arguments.putString("name", user.name ?: user.login)
                 arguments.putString("login", user.login)
                 arguments.putString("avatar", user.avatarUrl)
+                arguments.putBoolean("isMyProfile", true)
                 fragment.arguments = arguments
                 supportActionBar?.title = getString(R.string.menu_profile)
                 supportFragmentManager.beginTransaction()

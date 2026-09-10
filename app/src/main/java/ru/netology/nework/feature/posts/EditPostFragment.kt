@@ -22,12 +22,14 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.bumptech.glide.Glide
+import com.yandex.mapkit.MapKitFactory
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import ru.netology.nework.R
 import ru.netology.nework.core.util.FilePartUtils
 import ru.netology.nework.databinding.FragmentEditPostBinding
 import ru.netology.nework.feature.common.MapFragment
+import ru.netology.nework.feature.users.UsersSelectFragment
 import java.io.File
 
 @AndroidEntryPoint
@@ -39,6 +41,7 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
     private var attachmentUri: Uri? = null
     private var cameraPhotoUri: Uri? = null
     private var pendingStorageAction: (() -> Unit)? = null
+    private var selectedMentionUserIds: MutableList<String> = mutableListOf()
 
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
@@ -121,8 +124,13 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
         }
 
         binding.editPostMentionButton.setOnClickListener {
+            val fragment = UsersSelectFragment()
+            fragment.onUsersSelected = { userIds ->
+                selectedMentionUserIds.clear()
+                selectedMentionUserIds.addAll(userIds)
+            }
             parentFragmentManager.beginTransaction()
-                .replace(R.id.container, ru.netology.nework.feature.users.UsersSelectFragment())
+                .replace(R.id.container, fragment)
                 .addToBackStack(null)
                 .commit()
         }
@@ -134,29 +142,14 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
                 .commit()
         }
 
+        parentFragmentManager.setFragmentResultListener("location_pick", viewLifecycleOwner) { requestKey, bundle ->
+            val lat = bundle.getDouble("lat")
+            val lng = bundle.getDouble("lng")
+            binding.editPostLocationButton.text = String.format("%.4f, %.4f", lat, lng)
+        }
+
         binding.editPostRemoveAttachment.setOnClickListener {
             clearAttachment()
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.loading.collect { loading ->
-                    binding.editPostProgress.isVisible = loading
-                }
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.errorMessage.collect { message ->
-                    if (message != null) {
-                        binding.editPostError.visibility = View.VISIBLE
-                        binding.editPostError.text = message
-                    } else {
-                        binding.editPostError.visibility = View.GONE
-                    }
-                }
-            }
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -173,14 +166,8 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
 
     private fun showAttachDialog() {
         AlertDialog.Builder(requireContext())
-            .setTitle(R.string.attach_title)
-            .setItems(
-                arrayOf(
-                    getString(R.string.attach_gallery),
-                    getString(R.string.attach_video),
-                    getString(R.string.attach_audio)
-                )
-            ) { _, which ->
+            .setTitle("вложение")
+            .setItems(arrayOf("Галерея", "Видео", "Аудио")) { _, which ->
                 when (which) {
                     0 -> requestStorage(Manifest.permission.READ_MEDIA_IMAGES) {
                         pickImageLauncher.launch("image/*")
@@ -247,7 +234,6 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
 
         if (mimeType.startsWith("image/")) {
             binding.editPostAttachmentPreview.visibility = View.VISIBLE
-            binding.editPostAttachmentName.visibility = View.GONE
             Glide.with(this)
                 .load(uri)
                 .centerCrop()
@@ -255,8 +241,6 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
         } else {
             binding.editPostAttachmentPreview.setImageDrawable(null)
             binding.editPostAttachmentPreview.visibility = View.VISIBLE
-            binding.editPostAttachmentName.visibility = View.VISIBLE
-            binding.editPostAttachmentName.text = uri.lastPathSegment ?: getString(R.string.attachment_placeholder)
         }
     }
 
@@ -264,16 +248,15 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
         attachmentUri = null
         binding.editPostAttachmentBlock.visibility = View.GONE
         binding.editPostAttachmentPreview.setImageDrawable(null)
-        binding.editPostAttachmentName.visibility = View.GONE
     }
 
     private fun savePost() {
         val content = binding.editPostText.text?.toString()?.trim() ?: ""
         if (content.isEmpty()) {
-            Toast.makeText(requireContext(), R.string.post_text_hint, Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "введите текст поста", Toast.LENGTH_SHORT).show()
             return
         }
-        viewModel.savePost(content, attachmentUri)
+        viewModel.savePost(content, attachmentUri, selectedMentionUserIds)
     }
 
     override fun onDestroyView() {

@@ -12,7 +12,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import com.yandex.mapkit.MapKitFactory
+import com.yandex.mapkit.geometry.Point
+import com.yandex.mapkit.map.CameraPosition
+import com.yandex.mapkit.map.Map
+import com.yandex.mapkit.map.MapKit
 import com.yandex.mapkit.mapview.MapView
 import dagger.hilt.android.AndroidEntryPoint
 import ru.netology.nework.core.config.AppSecrets
@@ -30,6 +33,8 @@ class MapFragment : Fragment() {
     private var mapView: MapView? = null
     private var mapKitInited = false
     private var pickLocation = false
+    private var currentLat = 55.751574
+    private var currentLng = 37.573856
 
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -66,11 +71,12 @@ class MapFragment : Fragment() {
 
         if (appSecrets.mapsApiKey.isBlank()) {
             binding.mapStubText.visibility = View.VISIBLE
-            binding.mapStubText.text = "добавь MAPS_API_KEY в secrets.properties"
             return
         }
 
         binding.mapConfirmButton.setOnClickListener {
+            val result = bundleOf("lat" to currentLat, "lng" to currentLng)
+            parentFragmentManager.setFragmentResult("location_pick", result)
             parentFragmentManager.popBackStack()
         }
 
@@ -111,23 +117,50 @@ class MapFragment : Fragment() {
                 FrameLayout.LayoutParams.MATCH_PARENT
             )
             binding.mapContainer.addView(mapView, layoutParams)
+
+            mapView?.map?.addMapListener(object : com.yandex.mapkit.map.Map.MapTapListener {
+                override fun onMapTap(map: Map, point: Point) {
+                    if (pickLocation) {
+                        val cameraPosition = CameraPosition(point, 17.0f)
+                        mapView?.map?.move(cameraPosition)
+                    }
+                }
+
+                override fun onMapLongTap(map: Map, point: Point) {
+                }
+            })
+
+            mapView?.map?.addCameraListener(object : com.yandex.mapkit.map.CameraListener {
+                override fun onCameraPositionChanged(map: Map, cameraPosition: CameraPosition, reason: com.yandex.mapkit.map.CameraUpdateReason) {
+                    currentLat = cameraPosition.target.latitude
+                    currentLng = cameraPosition.target.longitude
+                    if (pickLocation) {
+                        binding.mapCoordsText.text = String.format("%.6f, %.6f", currentLat, currentLng)
+                        binding.mapCoordsText.visibility = View.VISIBLE
+                    }
+                }
+            })
         }
+
+        val point = Point(currentLat, currentLng)
+        val cameraPosition = CameraPosition(point, 17.0f, 0.0f, 0.0f)
+        mapView?.map?.move(cameraPosition)
     }
 
     override fun onStart() {
         super.onStart()
-        if (mapView != null) {
+        if (mapKitInited) {
             MapKitFactory.getInstance().onStart()
-            mapView?.onStart()
         }
+        mapView?.onStart()
     }
 
     override fun onStop() {
-        if (mapView != null) {
-            mapView?.onStop()
+        super.onStop()
+        if (mapKitInited) {
             MapKitFactory.getInstance().onStop()
         }
-        super.onStop()
+        mapView?.onStop()
     }
 
     override fun onDestroyView() {

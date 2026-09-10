@@ -1,5 +1,6 @@
 package ru.netology.nework.feature.events
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -13,8 +14,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import ru.netology.nework.R
+import ru.netology.nework.core.common.UiState
 import ru.netology.nework.core.model.Event
-import ru.netology.nework.core.model.EventType
 import ru.netology.nework.databinding.FragmentEventsBinding
 
 @AndroidEntryPoint
@@ -30,37 +31,20 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
         _binding = FragmentEventsBinding.bind(view)
 
         adapter = EventsAdapter(
-            events = emptyList(),
             onEventClick = { event ->
-            val fragment = EventDetailsFragment()
-            val arguments = Bundle()
-            arguments.putString("author", event.author?.name ?: "без имени")
-            arguments.putString("content", event.content)
-            arguments.putLong("likes", event.likeOwnerIdsCount ?: 0)
-            if (event.publishedAt != null) {
-                arguments.putString("published", event.publishedAt.toString())
-            } else {
-                arguments.putString("published", "")
-            }
-            if (event.eventAt != null) {
-                arguments.putString("eventAt", event.eventAt.toString())
-            }
-            if (event.type == EventType.ONLINE) {
-                arguments.putString("type", "Online")
-            } else {
-                arguments.putString("type", "Offline")
-            }
-            arguments.putString("link", event.link)
-            arguments.putString("job", "В поиске работы")
-            fragment.arguments = arguments
-
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.container, fragment)
-                .addToBackStack(null)
-                .commit()
+                openEventDetails(event)
             },
             onShareClick = { event ->
                 shareEvent(event)
+            },
+            onMenuClick = { event ->
+                showEventMenu(event)
+            },
+            onDeleteClick = { event ->
+                deleteEvent(event)
+            },
+            onLikeClick = { event ->
+                viewModel.likeEvent(event)
             }
         )
 
@@ -81,18 +65,23 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.events.collect { events ->
-                    adapter.updateEvents(events)
-                    binding.eventsList.isVisible = events.isNotEmpty()
-                }
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.loading.collect { loading ->
-                    binding.eventsProgress.isVisible = loading && adapter.itemCount == 0
-                    binding.eventsRefresh.isRefreshing = loading && adapter.itemCount > 0
+                viewModel.events.collect { state ->
+                    when (state) {
+                        is UiState.Loading -> {
+                            binding.eventsProgress.isVisible = adapter.itemCount == 0
+                            binding.eventsRefresh.isRefreshing = adapter.itemCount > 0
+                        }
+                        is UiState.Success -> {
+                            adapter.submitList(state.data)
+                            binding.eventsList.isVisible = state.data.isNotEmpty()
+                            binding.eventsProgress.isVisible = false
+                            binding.eventsRefresh.isRefreshing = false
+                        }
+                        is UiState.Error -> {
+                            binding.eventsError.visibility = View.VISIBLE
+                            binding.eventsError.text = state.message
+                        }
+                    }
                 }
             }
         }
@@ -111,8 +100,54 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
         }
     }
 
+    private fun openEventDetails(event: Event) {
+        val fragment = EventDetailsFragment()
+        val arguments = Bundle()
+        arguments.putString("eventId", event.id)
+        arguments.putString("authorName", event.authorName)
+        arguments.putString("authorAvatarUrl", event.authorAvatarUrl)
+        arguments.putString("authorJob", event.authorJob)
+        arguments.putString("content", event.content)
+        arguments.putLong("likes", event.likeOwnerIdsCount ?: 0)
+        arguments.putLong("publishedAt", event.publishedAt ?: 0)
+        arguments.putLong("eventAt", event.eventAt ?: 0)
+        arguments.putString("type", event.typeFormatted)
+        arguments.putString("link", event.link)
+        if (event.speakerIds != null && event.speakerIds.isNotEmpty()) {
+            arguments.putStringArrayList("speakerIds", ArrayList(event.speakerIds))
+        }
+        fragment.arguments = arguments
+
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.container, fragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun showEventMenu(event: Event) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("действия с событием")
+            .setItems(arrayOf("Редактировать", "Удалить")) { _, which ->
+                if (which == 1) {
+                    deleteEvent(event)
+                }
+            }
+            .show()
+    }
+
+    private fun deleteEvent(event: Event) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("удалить событие")
+            .setMessage("удалить это событие?")
+            .setPositiveButton("удалить") { _, _ ->
+                viewModel.deleteEvent(event)
+            }
+            .setNegativeButton("отмена", null)
+            .show()
+    }
+
     private fun shareEvent(event: Event) {
-        val author = event.author?.name ?: ""
+        val author = event.authorName ?: ""
         val text = buildString {
             if (author.isNotEmpty()) {
                 append(author)

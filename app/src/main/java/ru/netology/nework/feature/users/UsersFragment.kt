@@ -26,24 +26,27 @@ class UsersFragment : Fragment(R.layout.fragment_users) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentUsersBinding.bind(view)
 
-        adapter = UsersAdapter(emptyList()) { user ->
-            val fragment = UserProfileFragment()
-            val arguments = Bundle()
-            arguments.putString("userId", user.id)
-            if (user.name != null) {
-                arguments.putString("name", user.name)
-            } else {
-                arguments.putString("name", "без имени")
-            }
-            arguments.putString("login", user.login)
-            arguments.putString("avatar", user.avatarUrl)
-            fragment.arguments = arguments
+        adapter = UsersAdapter(
+            users = emptyList(),
+            onUserClick = { user ->
+                val fragment = UserProfileFragment()
+                val arguments = Bundle()
+                arguments.putString("userId", user.id)
+                if (user.name != null) {
+                    arguments.putString("name", user.name)
+                } else {
+                    arguments.putString("name", "без имени")
+                }
+                arguments.putString("login", user.login)
+                arguments.putString("avatar", user.avatarUrl)
+                fragment.arguments = arguments
 
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.container, fragment)
-                .addToBackStack(null)
-                .commit()
-        }
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.container, fragment)
+                    .addToBackStack(null)
+                    .commit()
+            }
+        )
 
         binding.usersList.layoutManager = LinearLayoutManager(requireContext())
         binding.usersList.adapter = adapter

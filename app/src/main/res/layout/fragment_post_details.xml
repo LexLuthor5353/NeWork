@@ -126,6 +126,22 @@
         </LinearLayout>
 
         <TextView
+            android:id="@+id/postDetailsLikedByTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/liked_by"
+            android:textStyle="bold" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/postDetailsLikedByList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:nestedScrollingEnabled="false"
+            android:visibility="gone" />
+
+        <TextView
             android:id="@+id/postDetailsJobTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

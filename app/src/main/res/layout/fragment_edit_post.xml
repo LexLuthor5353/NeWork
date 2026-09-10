@@ -13,7 +13,8 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:clipToPadding="false"
-        android:fillViewport="true">
+        android:fillViewport="true"
+        android:paddingBottom="72dp">
 
         <LinearLayout
             android:id="@+id/editPostContent"
@@ -28,9 +29,9 @@
                 android:layout_height="wrap_content"
                 android:background="@android:color/transparent"
                 android:gravity="top"
-                android:hint="@string/post_text_hint"
+                android:hint="Напишите что-нибудь..."
                 android:inputType="textMultiLine|textCapSentences"
-                android:minHeight="120dp"
+                android:minHeight="150dp"
                 android:textColor="@color/black"
                 android:textColorHint="@color/gray"
                 android:textSize="16sp" />
@@ -47,19 +48,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="220dp"
                     android:background="@drawable/bg_attachment"
-                    android:contentDescription="@string/attachment_placeholder"
+                    android:contentDescription="attachment"
                     android:scaleType="centerCrop" />
-
-                <TextView
-                    android:id="@+id/editPostAttachmentName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:gravity="center"
-                    android:padding="16dp"
-                    android:textColor="@color/gray"
-                    android:textSize="16sp"
-                    android:visibility="gone" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/editPostRemoveAttachment"
@@ -67,47 +57,13 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="bottom|center_horizontal"
                     android:layout_marginBottom="16dp"
-                    android:backgroundTint="@color/purple_500"
+                    android:backgroundTint="#7C4DFF"
                     android:minWidth="120dp"
-                    android:text="@string/btn_remove"
+                    android:text="Remove"
                     android:textAllCaps="false"
                     android:textColor="@color/white"
                     app:cornerRadius="24dp" />
             </FrameLayout>
-
-            <TextView
-                android:id="@+id/editPostLocationText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:textColor="@color/gray"
-                android:visibility="gone" />
-
-            <TextView
-                android:id="@+id/editPostSelectedMentions"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textColor="@color/gray"
-                android:visibility="gone" />
-
-            <ProgressBar
-                android:id="@+id/editPostProgress"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="16dp"
-                android:indeterminateTint="@color/purple_500"
-                android:visibility="gone" />
-
-            <TextView
-                android:id="@+id/editPostError"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center"
-                android:textColor="@color/red"
-                android:visibility="gone" />
         </LinearLayout>
     </ScrollView>
 
@@ -115,18 +71,18 @@
         android:id="@+id/editPostToolbar"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:background="@color/input_fill"
+        android:background="#F5F5F5"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp">
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
 
         <ImageButton
             android:id="@+id/editPostPhotoButton"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/btn_photo"
+            android:contentDescription="photo"
             android:src="@drawable/ic_camera_24"
             android:tint="@color/black" />
 
@@ -134,9 +90,9 @@
             android:id="@+id/editPostAttachButton"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="16dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/attachment_placeholder"
+            android:contentDescription="attach"
             android:src="@drawable/ic_attach_24"
             android:tint="@color/black" />
 
@@ -144,9 +100,9 @@
             android:id="@+id/editPostMentionButton"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="16dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/btn_mention"
+            android:contentDescription="mention"
             android:src="@drawable/ic_people_24"
             android:tint="@color/black" />
 
@@ -154,9 +110,9 @@
             android:id="@+id/editPostLocationButton"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="16dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/btn_location"
+            android:contentDescription="location"
             android:src="@drawable/ic_location_24"
             android:tint="@color/black" />
     </LinearLayout>

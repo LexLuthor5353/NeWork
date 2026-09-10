@@ -13,7 +13,7 @@
         android:layout_height="96dp"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="16dp"
-        android:contentDescription="@string/user_name"
+        android:contentDescription="user avatar"
         android:scaleType="centerCrop"
         android:src="@drawable/bg_avatar" />
 
@@ -25,7 +25,7 @@
         android:layout_marginTop="8dp"
         android:textSize="18sp"
         android:textStyle="bold"
-        tools:text="@string/user_name" />
+        tools:text="Имя пользователя" />
 
     <TextView
         android:id="@+id/userProfileLogin"
@@ -33,18 +33,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:textColor="@color/gray"
-        tools:text="@string/user_login" />
-
-    <Button
-        android:id="@+id/userProfileAddJobButton"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:text="@string/btn_add_job"
-        android:textColor="@color/purple_500"
-        android:visibility="gone"
-        tools:visibility="visible" />
+        tools:text="login" />
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/userProfileTabs"
@@ -59,12 +48,12 @@
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/tab_wall" />
+            android:text="Стена" />
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/tab_jobs" />
+            android:text="Работы" />
     </com.google.android.material.tabs.TabLayout>
 
     <FrameLayout
@@ -78,10 +67,26 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/userProfileJobsList"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="gone" />
+            android:layout_height="match_parent">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/userProfileJobsList"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/userProfileAddJobFab"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|end"
+                android:layout_margin="16dp"
+                android:contentDescription="добавить работу"
+                android:src="@android:drawable/ic_input_add"
+                app:backgroundTint="@color/purple_500"
+                app:tint="@color/white" />
+        </FrameLayout>
     </FrameLayout>
 </LinearLayout>

@@ -2,53 +2,37 @@ package ru.netology.nework.feature.users
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import ru.netology.nework.core.model.Job
 import ru.netology.nework.databinding.ItemJobBinding
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class JobsAdapter(
-    private var jobs: List<Job>
-) : RecyclerView.Adapter<JobsAdapter.JobHolder>() {
+    private val onDeleteClick: (Job) -> Unit = {}
+) : ListAdapter<Job, JobsAdapter.JobHolder>(JobDiffCallback()) {
 
-    private val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-
-    class JobHolder(val binding: ItemJobBinding) : RecyclerView.ViewHolder(binding.root)
+    class JobHolder(val binding: ItemJobBinding) : androidx.recyclerview.widget.RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): JobHolder {
         val binding = ItemJobBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return JobHolder(binding)
     }
 
-    override fun getItemCount(): Int {
-        return jobs.size
-    }
-
     override fun onBindViewHolder(holder: JobHolder, position: Int) {
-        val job = jobs[position]
+        val job = getItem(position)
         holder.binding.jobCompany.text = job.company
         holder.binding.jobPosition.text = job.position
-
-        var periodText = ""
-        if (job.startAt != null) {
-            periodText = dateFormat.format(Date(job.startAt))
-        }
-        if (job.finishAt != null) {
-            periodText = periodText + " — " + dateFormat.format(Date(job.finishAt))
-        } else {
-            if (periodText.length > 0) {
-                periodText = periodText + " — сейчас"
-            }
-        }
-        holder.binding.jobPeriod.text = periodText
-
-        holder.binding.jobActions.visibility = android.view.View.GONE
+        holder.binding.jobPeriod.text = job.periodFormatted
+        holder.binding.jobDeleteButton.setOnClickListener { onDeleteClick(job) }
     }
 
-    fun updateJobs(newJobs: List<Job>) {
-        jobs = newJobs
-        notifyDataSetChanged()
+    private class JobDiffCallback : DiffUtil.ItemCallback<Job>() {
+        override fun areItemsTheSame(oldItem: Job, newItem: Job): Boolean {
+            return oldItem.id == newItem.id
+        }
+
+        override fun areContentsTheSame(oldItem: Job, newItem: Job): Boolean {
+            return oldItem == newItem
+        }
     }
 }

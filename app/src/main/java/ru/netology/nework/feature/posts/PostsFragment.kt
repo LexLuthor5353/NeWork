@@ -1,5 +1,6 @@
 package ru.netology.nework.feature.posts
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -14,8 +15,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import ru.netology.nework.MainActivity
 import ru.netology.nework.R
+import ru.netology.nework.core.common.UiState
 import ru.netology.nework.core.model.Post
-import ru.netology.nework.core.session.TokenStore
 import ru.netology.nework.databinding.FragmentPostsBinding
 import javax.inject.Inject
 
@@ -23,7 +24,7 @@ import javax.inject.Inject
 class PostsFragment : Fragment(R.layout.fragment_posts) {
 
     @Inject
-    lateinit var tokenStore: TokenStore
+    lateinit var tokenStore: ru.netology.nework.core.session.TokenStore
 
     private var _binding: FragmentPostsBinding? = null
     private val binding get() = _binding!!
@@ -35,25 +36,20 @@ class PostsFragment : Fragment(R.layout.fragment_posts) {
         _binding = FragmentPostsBinding.bind(view)
 
         adapter = PostsAdapter(
-            posts = emptyList(),
             onPostClick = { post ->
-                val fragment = PostDetailsFragment()
-                val arguments = Bundle()
-                arguments.putString("author", post.author?.name ?: "без имени")
-                arguments.putString("content", post.content)
-                arguments.putLong("likes", post.likeOwnerIdsCount ?: 0)
-                arguments.putString("published", post.publishedAt?.toString() ?: "")
-                arguments.putString("link", post.link)
-                arguments.putString("job", "В поиске работы")
-                fragment.arguments = arguments
-
-                parentFragmentManager.beginTransaction()
-                    .replace(R.id.container, fragment)
-                    .addToBackStack(null)
-                    .commit()
+                openPostDetails(post)
             },
             onShareClick = { post ->
                 sharePost(post)
+            },
+            onMenuClick = { post ->
+                showPostMenu(post)
+            },
+            onDeleteClick = { post ->
+                deletePost(post)
+            },
+            onLikeClick = { post ->
+                viewModel.likePost(post)
             }
         )
 
@@ -61,24 +57,15 @@ class PostsFragment : Fragment(R.layout.fragment_posts) {
         binding.postsList.adapter = adapter
 
         binding.postsLoginButton.setOnClickListener {
-            val activity = requireActivity()
-            if (activity is MainActivity) {
-                activity.openLogin()
-            }
+            (requireActivity() as MainActivity).openLogin()
         }
 
         binding.postsRegisterButton.setOnClickListener {
-            val activity = requireActivity()
-            if (activity is MainActivity) {
-                activity.openRegister()
-            }
+            (requireActivity() as MainActivity).openRegister()
         }
 
         binding.postsAddButton.setOnClickListener {
-            val activity = requireActivity()
-            if (activity is MainActivity) {
-                activity.openEditPost()
-            }
+            (requireActivity() as MainActivity).openEditPost()
         }
 
         binding.postsRefresh.setColorSchemeResources(R.color.purple_500)
@@ -96,18 +83,23 @@ class PostsFragment : Fragment(R.layout.fragment_posts) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.posts.collect { posts ->
-                    adapter.updatePosts(posts)
-                    binding.postsList.isVisible = posts.isNotEmpty()
-                }
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.loading.collect { loading ->
-                    binding.postsProgress.isVisible = loading && adapter.itemCount == 0
-                    binding.postsRefresh.isRefreshing = loading && adapter.itemCount > 0
+                viewModel.posts.collect { state ->
+                    when (state) {
+                        is UiState.Loading -> {
+                            binding.postsProgress.isVisible = adapter.itemCount == 0
+                            binding.postsRefresh.isRefreshing = adapter.itemCount > 0
+                        }
+                        is UiState.Success -> {
+                            adapter.submitList(state.data)
+                            binding.postsList.isVisible = state.data.isNotEmpty()
+                            binding.postsProgress.isVisible = false
+                            binding.postsRefresh.isRefreshing = false
+                        }
+                        is UiState.Error -> {
+                            binding.postsError.visibility = View.VISIBLE
+                            binding.postsError.text = state.message
+                        }
+                    }
                 }
             }
         }
@@ -126,8 +118,52 @@ class PostsFragment : Fragment(R.layout.fragment_posts) {
         }
     }
 
+    private fun openPostDetails(post: Post) {
+        val fragment = PostDetailsFragment()
+        val arguments = Bundle()
+        arguments.putString("postId", post.id)
+        arguments.putString("authorName", post.authorName)
+        arguments.putString("authorAvatarUrl", post.authorAvatarUrl)
+        arguments.putString("authorJob", post.authorJob)
+        arguments.putString("content", post.content)
+        arguments.putLong("likes", post.likeOwnerIdsCount ?: 0)
+        arguments.putLong("publishedAt", post.publishedAt ?: 0)
+        arguments.putString("link", post.link)
+        if (post.likeOwnerIds.isNotEmpty()) {
+            arguments.putStringArrayList("likeOwnerIds", ArrayList(post.likeOwnerIds))
+        }
+        fragment.arguments = arguments
+
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.container, fragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun showPostMenu(post: Post) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("действия с постом")
+            .setItems(arrayOf("Редактировать", "Удалить")) { _, which ->
+                if (which == 1) {
+                    deletePost(post)
+                }
+            }
+            .show()
+    }
+
+    private fun deletePost(post: Post) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("удалить пост")
+            .setMessage("удалить этот пост?")
+            .setPositiveButton("удалить") { _, _ ->
+                viewModel.deletePost(post)
+            }
+            .setNegativeButton("отмена", null)
+            .show()
+    }
+
     private fun sharePost(post: Post) {
-        val author = post.author?.name ?: ""
+        val author = post.authorName ?: ""
         val text = buildString {
             if (author.isNotEmpty()) {
                 append(author)

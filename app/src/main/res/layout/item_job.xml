@@ -16,54 +16,54 @@
         android:orientation="vertical"
         android:padding="12dp">
 
-        <TextView
-            android:id="@+id/jobCompany"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/black"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            tools:text="@string/job_company" />
-
-        <TextView
-            android:id="@+id/jobPosition"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textSize="14sp"
-            tools:text="@string/job_position" />
-
-        <TextView
-            android:id="@+id/jobPeriod"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="@color/gray"
-            android:textSize="13sp"
-            tools:text="@string/job_period" />
-
         <LinearLayout
-            android:id="@+id/jobActions"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
             android:orientation="horizontal"
-            android:visibility="gone"
-            tools:visibility="visible">
+            android:gravity="center_vertical">
 
-            <Button
-                android:id="@+id/jobEditButton"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="@string/menu_edit" />
+                android:layout_weight="1"
+                android:orientation="vertical">
 
-            <Button
+                <TextView
+                    android:id="@+id/jobCompany"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/black"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    tools:text="ООО Эптекс" />
+
+                <TextView
+                    android:id="@+id/jobPosition"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textSize="14sp"
+                    tools:text="Преподаватель" />
+
+                <TextView
+                    android:id="@+id/jobPeriod"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@color/gray"
+                    android:textSize="13sp"
+                    tools:text="1 апреля 2023 — н.в." />
+            </LinearLayout>
+
+            <ImageButton
                 android:id="@+id/jobDeleteButton"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/menu_delete" />
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="удалить"
+                android:src="@android:drawable/ic_menu_delete"
+                android:tint="@color/gray" />
         </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

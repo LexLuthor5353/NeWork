@@ -121,3 +121,33 @@ data class JobDto(
     @SerializedName("finish")
     val finish: String?
 )
+
+data class EventCreateDto(
+    @SerializedName("content")
+    val content: String,
+    @SerializedName("type")
+    val type: String,
+    @SerializedName("datetime")
+    val datetime: String? = null,
+    @SerializedName("coords")
+    val coords: CoordsDto? = null,
+    @SerializedName("link")
+    val link: String? = null,
+    @SerializedName("attachment")
+    val attachment: AttachmentDto? = null,
+    @SerializedName("speakerIds")
+    val speakerIds: List<Long> = emptyList()
+)
+
+data class JobCreateDto(
+    @SerializedName("name")
+    val name: String,
+    @SerializedName("position")
+    val position: String,
+    @SerializedName("link")
+    val link: String? = null,
+    @SerializedName("start")
+    val start: String,
+    @SerializedName("finish")
+    val finish: String? = null
+)

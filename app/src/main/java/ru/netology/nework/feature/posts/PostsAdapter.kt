@@ -1,104 +1,114 @@
 package ru.netology.nework.feature.posts
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import androidx.recyclerview.widget.RecyclerView
+import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import com.bumptech.glide.Glide
 import ru.netology.nework.R
 import ru.netology.nework.core.model.AttachmentType
 import ru.netology.nework.core.model.Post
 import ru.netology.nework.databinding.ItemPostBinding
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class PostsAdapter(
-    private var posts: List<Post>,
     private val onPostClick: (Post) -> Unit,
-    private val onShareClick: (Post) -> Unit = {}
-) : RecyclerView.Adapter<PostsAdapter.PostHolder>() {
+    private val onShareClick: (Post) -> Unit = {},
+    private val onMenuClick: (Post) -> Unit = {},
+    private val onDeleteClick: (Post) -> Unit = {},
+    private val onLikeClick: (Post) -> Unit = {}
+) : ListAdapter<Post, PostsAdapter.PostHolder>(PostDiffCallback()) {
 
-    private val dateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
-
-    class PostHolder(val binding: ItemPostBinding) : RecyclerView.ViewHolder(binding.root)
+    class PostHolder(val binding: ItemPostBinding) : androidx.recyclerview.widget.RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostHolder {
         val binding = ItemPostBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return PostHolder(binding)
     }
 
-    override fun getItemCount(): Int {
-        return posts.size
+    override fun onBindViewHolder(holder: PostHolder, position: Int) {
+        val post = getItem(position)
+        bindViewHolder(holder, post)
     }
 
-    override fun onBindViewHolder(holder: PostHolder, position: Int) {
-        val post = posts[position]
-        holder.binding.postAuthorName.text = post.author?.name ?: "без имени"
-        if (post.publishedAt != null) {
-            holder.binding.postPublished.text = dateFormat.format(Date(post.publishedAt))
-        } else {
-            holder.binding.postPublished.text = ""
-        }
+    private fun bindViewHolder(holder: PostHolder, post: Post) {
+        holder.binding.postAuthorName.text = post.authorName ?: "без имени"
+        holder.binding.postPublished.text = post.publishedFormatted
         holder.binding.postText.text = post.content
         holder.binding.postLikeButton.text = (post.likeOwnerIdsCount ?: 0).toString()
         holder.binding.postLikeButton.isChecked = post.likedByMe == true
 
-        val avatarUrl = post.author?.avatarUrl
-        if (avatarUrl != null && avatarUrl.isNotEmpty()) {
+        if (post.authorAvatarUrl.isNullOrBlank()) {
+            holder.binding.postAvatar.setImageResource(R.drawable.bg_avatar)
+        } else {
             Glide.with(holder.binding.postAvatar.context)
-                .load(avatarUrl)
+                .load(post.authorAvatarUrl)
                 .placeholder(R.drawable.bg_avatar)
                 .circleCrop()
                 .into(holder.binding.postAvatar)
-        } else {
-            holder.binding.postAvatar.setImageResource(R.drawable.bg_avatar)
         }
 
-        if (post.link != null && post.link.isNotEmpty()) {
-            holder.binding.postLink.visibility = View.VISIBLE
-            holder.binding.postLink.text = post.link
+        if (post.link.isNullOrBlank()) {
+            holder.binding.postLink.visibility = android.view.View.GONE
         } else {
-            holder.binding.postLink.visibility = View.GONE
+            holder.binding.postLink.visibility = android.view.View.VISIBLE
+            holder.binding.postLink.text = post.link
         }
 
         val attachment = post.attachment
-        if (attachment != null && attachment.type == AttachmentType.IMAGE && attachment.url != null) {
-            holder.binding.postAttachmentBlock.visibility = View.VISIBLE
-            holder.binding.postAttachmentLabel.visibility = View.GONE
-            holder.binding.postPlayIcon.visibility = View.GONE
-            Glide.with(holder.binding.postAttachmentImage.context)
-                .load(attachment.url)
-                .into(holder.binding.postAttachmentImage)
-        } else if (attachment != null && attachment.type == AttachmentType.VIDEO && attachment.url != null) {
-            holder.binding.postAttachmentBlock.visibility = View.VISIBLE
-            holder.binding.postAttachmentLabel.visibility = View.GONE
-            holder.binding.postPlayIcon.visibility = View.VISIBLE
-            Glide.with(holder.binding.postAttachmentImage.context)
-                .load(attachment.url)
-                .into(holder.binding.postAttachmentImage)
-        } else if (attachment != null) {
-            holder.binding.postAttachmentBlock.visibility = View.GONE
-            holder.binding.postPlayIcon.visibility = View.GONE
-            holder.binding.postAttachmentLabel.visibility = View.VISIBLE
-            holder.binding.postAttachmentLabel.text = attachment.type.name
-        } else {
-            holder.binding.postAttachmentBlock.visibility = View.GONE
-            holder.binding.postPlayIcon.visibility = View.GONE
-            holder.binding.postAttachmentLabel.visibility = View.GONE
+        when {
+            attachment?.type == AttachmentType.IMAGE && attachment.url.isNullOrBlank() -> {
+                holder.binding.postAttachmentBlock.visibility = android.view.View.GONE
+                holder.binding.postPlayIcon.visibility = android.view.View.GONE
+                holder.binding.postAttachmentLabel.visibility = android.view.View.GONE
+            }
+            attachment?.type == AttachmentType.IMAGE -> {
+                holder.binding.postAttachmentBlock.visibility = android.view.View.VISIBLE
+                holder.binding.postAttachmentLabel.visibility = android.view.View.GONE
+                holder.binding.postPlayIcon.visibility = android.view.View.GONE
+                Glide.with(holder.binding.postAttachmentImage.context)
+                    .load(attachment.url)
+                    .into(holder.binding.postAttachmentImage)
+            }
+            attachment?.type == AttachmentType.VIDEO && attachment.url.isNullOrBlank() -> {
+                holder.binding.postAttachmentBlock.visibility = android.view.View.GONE
+                holder.binding.postPlayIcon.visibility = android.view.View.GONE
+                holder.binding.postAttachmentLabel.visibility = android.view.View.GONE
+            }
+            attachment?.type == AttachmentType.VIDEO -> {
+                holder.binding.postAttachmentBlock.visibility = android.view.View.VISIBLE
+                holder.binding.postAttachmentLabel.visibility = android.view.View.GONE
+                holder.binding.postPlayIcon.visibility = android.view.View.VISIBLE
+                Glide.with(holder.binding.postAttachmentImage.context)
+                    .load(attachment.url)
+                    .into(holder.binding.postAttachmentImage)
+            }
+            attachment != null -> {
+                holder.binding.postAttachmentBlock.visibility = android.view.View.GONE
+                holder.binding.postPlayIcon.visibility = android.view.View.GONE
+                holder.binding.postAttachmentLabel.visibility = android.view.View.VISIBLE
+                holder.binding.postAttachmentLabel.text = attachment.type.name
+            }
+            else -> {
+                holder.binding.postAttachmentBlock.visibility = android.view.View.GONE
+                holder.binding.postPlayIcon.visibility = android.view.View.GONE
+                holder.binding.postAttachmentLabel.visibility = android.view.View.GONE
+            }
         }
 
-        holder.binding.postShareButton.setOnClickListener {
-            onShareClick(post)
-        }
-
-        holder.binding.root.setOnClickListener {
-            onPostClick(post)
-        }
+        holder.binding.postShareButton.setOnClickListener { onShareClick(post) }
+        holder.binding.postLikeButton.setOnClickListener { onLikeClick(post) }
+        holder.binding.postMenuButton.setOnClickListener { onMenuClick(post) }
+        holder.binding.root.setOnClickListener { onPostClick(post) }
     }
 
-    fun updatePosts(newPosts: List<Post>) {
-        posts = newPosts
-        notifyDataSetChanged()
+    private class PostDiffCallback : DiffUtil.ItemCallback<Post>() {
+        override fun areItemsTheSame(oldItem: Post, newItem: Post): Boolean {
+            return oldItem.id == newItem.id
+        }
+
+        override fun areContentsTheSame(oldItem: Post, newItem: Post): Boolean {
+            return oldItem == newItem
+        }
     }
 }
