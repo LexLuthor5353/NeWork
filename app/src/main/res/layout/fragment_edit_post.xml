@@ -84,7 +84,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="photo"
             android:src="@drawable/ic_camera_24"
-            android:tint="@color/black" />
+            app:tint="@color/black" />
 
         <ImageButton
             android:id="@+id/editPostAttachButton"
@@ -94,7 +94,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="attach"
             android:src="@drawable/ic_attach_24"
-            android:tint="@color/black" />
+            app:tint="@color/black" />
 
         <ImageButton
             android:id="@+id/editPostMentionButton"
@@ -104,7 +104,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="mention"
             android:src="@drawable/ic_people_24"
-            android:tint="@color/black" />
+            app:tint="@color/black" />
 
         <ImageButton
             android:id="@+id/editPostLocationButton"
@@ -114,6 +114,6 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="location"
             android:src="@drawable/ic_location_24"
-            android:tint="@color/black" />
+            app:tint="@color/black" />
     </LinearLayout>
 </LinearLayout>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/eventDetailsScroll"
     android:layout_width="match_parent"
@@ -59,7 +60,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/menu_edit"
                 android:src="@drawable/ic_more_vert_24"
-                android:tint="@color/gray" />
+                app:tint="@color/gray" />
         </LinearLayout>
 
         <TextView
@@ -131,7 +132,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/btn_like"
                 android:src="@drawable/ic_like_outlined_24"
-            android:tint="@color/gray" />
+            app:tint="@color/gray" />
 
             <TextView
                 android:id="@+id/eventDetailsLikeCount"

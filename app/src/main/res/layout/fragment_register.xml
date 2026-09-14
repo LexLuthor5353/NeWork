@@ -39,7 +39,7 @@
                 android:layout_gravity="center"
                 android:contentDescription="@string/btn_pick_avatar"
                 android:src="@drawable/ic_camera_24"
-                android:tint="@color/black" />
+                app:tint="@color/black" />
         </FrameLayout>
 
         <com.google.android.material.textfield.TextInputLayout

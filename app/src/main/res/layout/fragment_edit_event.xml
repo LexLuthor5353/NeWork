@@ -166,7 +166,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="photo"
             android:src="@drawable/ic_camera_24"
-            android:tint="@color/black" />
+            app:tint="@color/black" />
 
         <ImageButton
             android:id="@+id/editEventAttachButton"
@@ -176,7 +176,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="attach"
             android:src="@drawable/ic_attach_24"
-            android:tint="@color/black" />
+            app:tint="@color/black" />
 
         <ImageButton
             android:id="@+id/editEventLocationButton"
@@ -186,6 +186,6 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="location"
             android:src="@drawable/ic_location_24"
-            android:tint="@color/black" />
+            app:tint="@color/black" />
     </LinearLayout>
 </LinearLayout>
