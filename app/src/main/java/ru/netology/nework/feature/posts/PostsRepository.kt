@@ -55,6 +55,7 @@ class PostsRepository @Inject constructor(
                     )
                 },
                 mentionedUserIds = dto.mentionIds.map { it.toString() },
+                likeOwnerIds = dto.likeOwnerIds.map { it.toString() },
                 likeOwnerIdsCount = dto.likeOwnerIds.size.toLong(),
                 likedByMe = dto.likedByMe
             )

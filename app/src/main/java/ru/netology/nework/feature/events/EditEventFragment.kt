@@ -45,6 +45,7 @@ class EditEventFragment : Fragment(R.layout.fragment_edit_event) {
     private var pendingStorageAction: (() -> Unit)? = null
     private var selectedSpeakerUserIds: MutableList<String> = mutableListOf()
     private var eventDateMillis: Long? = null
+    private var currentLocation: String = ""
 
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
@@ -153,7 +154,7 @@ class EditEventFragment : Fragment(R.layout.fragment_edit_event) {
         parentFragmentManager.setFragmentResultListener("location_pick", viewLifecycleOwner) { requestKey, bundle ->
             val lat = bundle.getDouble("lat")
             val lng = bundle.getDouble("lng")
-            binding.editEventLocationButton.text = String.format("%.4f, %.4f", lat, lng)
+            currentLocation = String.format("%.4f, %.4f", lat, lng)
         }
 
         binding.editEventRemoveAttachment.setOnClickListener {

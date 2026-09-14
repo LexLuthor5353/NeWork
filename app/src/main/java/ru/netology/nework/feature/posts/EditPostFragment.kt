@@ -42,6 +42,7 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
     private var cameraPhotoUri: Uri? = null
     private var pendingStorageAction: (() -> Unit)? = null
     private var selectedMentionUserIds: MutableList<String> = mutableListOf()
+    private var currentLocation: String = ""
 
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
@@ -145,7 +146,7 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
         parentFragmentManager.setFragmentResultListener("location_pick", viewLifecycleOwner) { requestKey, bundle ->
             val lat = bundle.getDouble("lat")
             val lng = bundle.getDouble("lng")
-            binding.editPostLocationButton.text = String.format("%.4f, %.4f", lat, lng)
+            currentLocation = String.format("%.4f, %.4f", lat, lng)
         }
 
         binding.editPostRemoveAttachment.setOnClickListener {

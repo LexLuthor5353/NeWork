@@ -13,10 +13,8 @@ import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.yandex.mapkit.geometry.Point
-import com.yandex.mapkit.map.CameraPosition
-import com.yandex.mapkit.map.Map
-import com.yandex.mapkit.map.MapKit
 import com.yandex.mapkit.mapview.MapView
+import com.yandex.mapkit.MapKitFactory
 import dagger.hilt.android.AndroidEntryPoint
 import ru.netology.nework.core.config.AppSecrets
 import ru.netology.nework.databinding.FragmentMapBinding
@@ -117,34 +115,10 @@ class MapFragment : Fragment() {
                 FrameLayout.LayoutParams.MATCH_PARENT
             )
             binding.mapContainer.addView(mapView, layoutParams)
-
-            mapView?.map?.addMapListener(object : com.yandex.mapkit.map.Map.MapTapListener {
-                override fun onMapTap(map: Map, point: Point) {
-                    if (pickLocation) {
-                        val cameraPosition = CameraPosition(point, 17.0f)
-                        mapView?.map?.move(cameraPosition)
-                    }
-                }
-
-                override fun onMapLongTap(map: Map, point: Point) {
-                }
-            })
-
-            mapView?.map?.addCameraListener(object : com.yandex.mapkit.map.CameraListener {
-                override fun onCameraPositionChanged(map: Map, cameraPosition: CameraPosition, reason: com.yandex.mapkit.map.CameraUpdateReason) {
-                    currentLat = cameraPosition.target.latitude
-                    currentLng = cameraPosition.target.longitude
-                    if (pickLocation) {
-                        binding.mapCoordsText.text = String.format("%.6f, %.6f", currentLat, currentLng)
-                        binding.mapCoordsText.visibility = View.VISIBLE
-                    }
-                }
-            })
         }
 
         val point = Point(currentLat, currentLng)
-        val cameraPosition = CameraPosition(point, 17.0f, 0.0f, 0.0f)
-        mapView?.map?.move(cameraPosition)
+        mapView?.map?.move(com.yandex.mapkit.map.CameraPosition(point, 17.0f, 0.0f, 0.0f))
     }
 
     override fun onStart() {
