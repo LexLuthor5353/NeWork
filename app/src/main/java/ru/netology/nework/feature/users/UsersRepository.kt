@@ -8,6 +8,7 @@ import ru.netology.nework.core.network.dto.JobCreateDto
 import ru.netology.nework.core.network.toJob
 import ru.netology.nework.core.network.toPost
 import ru.netology.nework.core.network.toUser
+import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -21,15 +22,8 @@ class UsersRepository @Inject constructor(
         if (!response.isSuccessful) {
             throw Exception("сервер вернул код " + response.code())
         }
-        val body = response.body()
-        if (body == null) {
-            return emptyList()
-        }
-        val users = ArrayList<User>()
-        for (item in body) {
-            users.add(item.toUser())
-        }
-        return users
+        val body = response.body() ?: return emptyList()
+        return body.map { it.toUser() }
     }
 
     suspend fun loadUser(userId: String): User {
@@ -49,15 +43,8 @@ class UsersRepository @Inject constructor(
         if (!response.isSuccessful) {
             throw Exception("сервер вернул код " + response.code())
         }
-        val body = response.body()
-        if (body == null) {
-            return emptyList()
-        }
-        val posts = ArrayList<Post>()
-        for (item in body) {
-            posts.add(item.toPost())
-        }
-        return posts
+        val body = response.body() ?: return emptyList()
+        return body.map { it.toPost() }
     }
 
     suspend fun loadUserJobs(userId: String): List<Job> {
@@ -65,15 +52,8 @@ class UsersRepository @Inject constructor(
         if (!response.isSuccessful) {
             throw Exception("сервер вернул код " + response.code())
         }
-        val body = response.body()
-        if (body == null) {
-            return emptyList()
-        }
-        val jobs = ArrayList<Job>()
-        for (item in body) {
-            jobs.add(item.toJob())
-        }
-        return jobs
+        val body = response.body() ?: return emptyList()
+        return body.map { it.toJob() }
     }
 
     suspend fun loadMyJobs(): List<Job> {
@@ -81,24 +61,23 @@ class UsersRepository @Inject constructor(
         if (!response.isSuccessful) {
             throw Exception("сервер вернул код " + response.code())
         }
-        val body = response.body()
-        if (body == null) {
-            return emptyList()
-        }
-        val jobs = ArrayList<Job>()
-        for (item in body) {
-            jobs.add(item.toJob())
-        }
-        return jobs
+        val body = response.body() ?: return emptyList()
+        return body.map { it.toJob() }
     }
 
-    suspend fun createJob(name: String, position: String, link: String?, startAt: String?, finishAt: String?) {
+    suspend fun createJob(
+        name: String,
+        position: String,
+        link: String?,
+        startAt: String?,
+        finishAt: String?
+    ) {
         val response = apiService.createJob(
             JobCreateDto(
                 name = name,
                 position = position,
                 link = link,
-                start = startAt ?: java.time.Instant.now().toString(),
+                start = startAt ?: Instant.now().toString(),
                 finish = finishAt
             )
         )
@@ -106,6 +85,7 @@ class UsersRepository @Inject constructor(
             throw Exception("сервер вернул код " + response.code())
         }
     }
+
 
     suspend fun deleteJob(jobId: Long) {
         val response = apiService.deleteJob(jobId)

@@ -3,20 +3,18 @@ package ru.netology.nework.feature.posts
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import ru.netology.nework.core.common.UiState
 import ru.netology.nework.core.model.Post
-import ru.netology.nework.core.model.User
-import ru.netology.nework.feature.users.UsersRepository
 import javax.inject.Inject
 
 @HiltViewModel
 class PostsViewModel @Inject constructor(
-    private val postsRepository: PostsRepository,
-    private val usersRepository: UsersRepository
+    private val postsRepository: PostsRepository
 ) : ViewModel() {
 
     private val _posts = MutableStateFlow<UiState<List<Post>>>(UiState.Loading)
@@ -39,6 +37,8 @@ class PostsViewModel @Inject constructor(
             try {
                 val loadedPosts = postsRepository.loadLatestPosts()
                 _posts.value = UiState.Success(loadedPosts)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
             } catch (exception: Exception) {
                 _errorMessage.value = exception.message ?: "не удалось загрузить посты"
             }
@@ -59,21 +59,47 @@ class PostsViewModel @Inject constructor(
                     val currentPosts = (_posts.value as? UiState.Success)?.data?.toMutableList() ?: mutableListOf()
                     val index = currentPosts.indexOfFirst { it.id == post.id }
                     if (index >= 0) {
-                        val updatedIds = currentPosts[index].likeOwnerIds.toMutableList()
-                        if (currentLiked) {
-                            updatedIds.remove(post.id)
-                        } else {
-                            post.id?.let { updatedIds.add(it) }
-                        }
-                        currentPosts[index] = post.copy(
+                        val current = currentPosts[index]
+                        currentPosts[index] = current.copy(
                             likedByMe = !currentLiked,
-                            likeOwnerIds = updatedIds,
-                            likeOwnerIdsCount = (post.likeOwnerIdsCount ?: 0) + if (currentLiked) -1 else 1
+                            likeOwnerIdsCount = (current.likeOwnerIdsCount ?: 0) + if (currentLiked) -1 else 1
                         )
                         _posts.value = UiState.Success(currentPosts)
                     }
-                } catch (e: Exception) {
+                } catch (cancellation: CancellationException) {
+                    throw cancellation
+                } catch (exception: Exception) {
                     _errorMessage.value = "не удалось обновить лайк"
+                }
+            }
+        }
+    }
+
+    fun likePostById(postId: String) {
+        viewModelScope.launch {
+            postId.toLongOrNull()?.let { postIdLong ->
+                try {
+                    postsRepository.likePost(postIdLong)
+                    _errorMessage.value = null
+                } catch (cancellation: CancellationException) {
+                    throw cancellation
+                } catch (exception: Exception) {
+                    _errorMessage.value = "не удалось поставить лайк"
+                }
+            }
+        }
+    }
+
+    fun unlikePostById(postId: String) {
+        viewModelScope.launch {
+            postId.toLongOrNull()?.let { postIdLong ->
+                try {
+                    postsRepository.unlikePost(postIdLong)
+                    _errorMessage.value = null
+                } catch (cancellation: CancellationException) {
+                    throw cancellation
+                } catch (exception: Exception) {
+                    _errorMessage.value = "не удалось убрать лайк"
                 }
             }
         }
@@ -87,14 +113,12 @@ class PostsViewModel @Inject constructor(
                     val currentPosts = (_posts.value as? UiState.Success)?.data?.toMutableList() ?: mutableListOf()
                     currentPosts.removeAll { it.id == post.id }
                     _posts.value = UiState.Success(currentPosts)
-                } catch (e: Exception) {
+                } catch (cancellation: CancellationException) {
+                    throw cancellation
+                } catch (exception: Exception) {
                     _errorMessage.value = "не удалось удалить пост"
                 }
             }
         }
-    }
-
-    suspend fun loadUser(userId: String): User {
-        return usersRepository.loadUser(userId)
     }
 }

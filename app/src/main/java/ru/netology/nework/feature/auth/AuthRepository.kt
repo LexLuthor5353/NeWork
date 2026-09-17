@@ -20,18 +20,29 @@ class AuthRepository @Inject constructor(
 
     suspend fun login(login: String, password: String) {
         val response = apiService.login(login, password)
+
         if (!response.isSuccessful) {
+            if (response.code() == 400) {
+                throw Exception("Неправильный логин или пароль")
+            }
             throw Exception("сервер вернул код " + response.code())
         }
+
         val body = response.body()
         if (body == null) {
             throw Exception("пустой ответ сервера")
         }
+
         tokenStore.setToken(body.token)
         tokenStore.setUserId(body.id.toString())
     }
 
-    suspend fun register(login: String, password: String, name: String, avatarUri: Uri? = null) {
+    suspend fun register(
+        login: String,
+        password: String,
+        name: String,
+        avatarUri: Uri? = null
+    ) {
         val response = if (avatarUri != null) {
             val filePart = FilePartUtils.createPart(context, avatarUri)
             val loginBody = login.toRequestBody("text/plain".toMediaType())
@@ -41,13 +52,19 @@ class AuthRepository @Inject constructor(
         } else {
             apiService.register(login, password, name)
         }
+
         if (!response.isSuccessful) {
+            if (response.code() == 400) {
+                throw Exception("Пользователь с таким логином уже зарегистрирован")
+            }
             throw Exception("сервер вернул код " + response.code())
         }
+
         val body = response.body()
         if (body == null) {
             throw Exception("пустой ответ сервера")
         }
+
         tokenStore.setToken(body.token)
         tokenStore.setUserId(body.id.toString())
     }

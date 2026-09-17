@@ -1,14 +1,17 @@
 package ru.netology.nework.feature.events
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import com.bumptech.glide.Glide
 import ru.netology.nework.R
 import ru.netology.nework.core.model.AttachmentType
 import ru.netology.nework.core.model.Event
-import ru.netology.nework.core.model.EventType
 import ru.netology.nework.databinding.ItemEventBinding
 
 class EventsAdapter(
@@ -18,6 +21,8 @@ class EventsAdapter(
     private val onDeleteClick: (Event) -> Unit = {},
     private val onLikeClick: (Event) -> Unit = {}
 ) : ListAdapter<Event, EventsAdapter.EventHolder>(EventDiffCallback()) {
+
+    var myId: String? = null
 
     class EventHolder(val binding: ItemEventBinding) : androidx.recyclerview.widget.RecyclerView.ViewHolder(binding.root)
 
@@ -40,7 +45,13 @@ class EventsAdapter(
         holder.binding.eventLikeButton.text = (event.likeOwnerIdsCount ?: 0).toString()
         holder.binding.eventLikeButton.isChecked = event.likedByMe == true
         holder.binding.eventShareButton.text = ""
-        holder.binding.eventViewsButton.visibility = android.view.View.GONE
+        holder.binding.eventViewsButton.visibility = View.GONE
+
+        if (event.authorId != null && myId != null && event.authorId == myId) {
+            holder.binding.eventMenuButton.visibility = View.VISIBLE
+        } else {
+            holder.binding.eventMenuButton.visibility = View.GONE
+        }
 
         if (event.authorAvatarUrl.isNullOrBlank()) {
             holder.binding.eventAvatar.setImageResource(R.drawable.bg_avatar)
@@ -53,33 +64,45 @@ class EventsAdapter(
         }
 
         if (event.link.isNullOrBlank()) {
-            holder.binding.eventLink.visibility = android.view.View.GONE
+            holder.binding.eventLink.visibility = View.GONE
         } else {
-            holder.binding.eventLink.visibility = android.view.View.VISIBLE
+            holder.binding.eventLink.visibility = View.VISIBLE
             holder.binding.eventLink.text = event.link
+            holder.binding.eventLink.setOnClickListener {
+                try {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(event.link))
+                    holder.binding.root.context.startActivity(intent)
+                } catch (exception: Exception) {
+                    Toast.makeText(
+                        holder.binding.root.context,
+                        "не удалось открыть ссылку",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
         }
 
         val attachment = event.attachment
         when {
             attachment?.type == AttachmentType.IMAGE && attachment.url.isNullOrBlank() -> {
-                holder.binding.eventAttachmentImage.visibility = android.view.View.GONE
-                holder.binding.eventAttachmentLabel.visibility = android.view.View.GONE
+                holder.binding.eventAttachmentImage.visibility = View.GONE
+                holder.binding.eventAttachmentLabel.visibility = View.GONE
             }
             attachment?.type == AttachmentType.IMAGE -> {
-                holder.binding.eventAttachmentImage.visibility = android.view.View.VISIBLE
-                holder.binding.eventAttachmentLabel.visibility = android.view.View.GONE
+                holder.binding.eventAttachmentImage.visibility = View.VISIBLE
+                holder.binding.eventAttachmentLabel.visibility = View.GONE
                 Glide.with(holder.binding.eventAttachmentImage.context)
                     .load(attachment.url)
                     .into(holder.binding.eventAttachmentImage)
             }
             attachment != null -> {
-                holder.binding.eventAttachmentImage.visibility = android.view.View.GONE
-                holder.binding.eventAttachmentLabel.visibility = android.view.View.VISIBLE
+                holder.binding.eventAttachmentImage.visibility = View.GONE
+                holder.binding.eventAttachmentLabel.visibility = View.VISIBLE
                 holder.binding.eventAttachmentLabel.text = attachment.type.name
             }
             else -> {
-                holder.binding.eventAttachmentImage.visibility = android.view.View.GONE
-                holder.binding.eventAttachmentLabel.visibility = android.view.View.GONE
+                holder.binding.eventAttachmentImage.visibility = View.GONE
+                holder.binding.eventAttachmentLabel.visibility = View.GONE
             }
         }
 

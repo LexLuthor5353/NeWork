@@ -6,10 +6,29 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
+import com.yandex.mapkit.MapKitFactory
 import dagger.hilt.android.HiltAndroidApp
+import java.util.Properties
 
 @HiltAndroidApp
 class NeWorkApp : Application() {
+
+    override fun onCreate() {
+        super.onCreate()
+
+        val properties = Properties()
+        try {
+            assets.open("secrets.properties").use { stream ->
+                properties.load(stream)
+            }
+        } catch (exception: Exception) {
+        }
+
+        val mapsKey = properties.getProperty("MAPS_API_KEY")?.trim() ?: ""
+        if (mapsKey.isNotEmpty()) {
+            MapKitFactory.setApiKey(mapsKey)
+        }
+    }
 
     override fun registerReceiver(receiver: BroadcastReceiver?, filter: IntentFilter?): Intent? {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

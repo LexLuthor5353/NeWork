@@ -13,18 +13,26 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import ru.netology.nework.MainActivity
 import ru.netology.nework.R
 import ru.netology.nework.core.common.UiState
 import ru.netology.nework.core.model.Event
+import ru.netology.nework.core.session.TokenStore
 import ru.netology.nework.databinding.FragmentEventsBinding
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class EventsFragment : Fragment(R.layout.fragment_events) {
+
+    @Inject
+    lateinit var tokenStore: TokenStore
 
     private var _binding: FragmentEventsBinding? = null
     private val binding get() = _binding!!
     private val viewModel: EventsViewModel by viewModels()
     private lateinit var adapter: EventsAdapter
+
+    private var myToken: String? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -52,15 +60,36 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
         binding.eventsList.adapter = adapter
 
         binding.eventsAddButton.setOnClickListener {
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.container, EditEventFragment())
-                .addToBackStack("edit")
-                .commit()
+            if (myToken.isNullOrBlank()) {
+                showAuthDialog()
+            } else {
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.container, EditEventFragment())
+                    .addToBackStack("edit")
+                    .commit()
+            }
         }
 
         binding.eventsRefresh.setColorSchemeResources(R.color.purple_500)
         binding.eventsRefresh.setOnRefreshListener {
             viewModel.loadEvents()
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                tokenStore.tokenFlow().collect { token ->
+                    myToken = token
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                tokenStore.userIdFlow().collect { userId ->
+                    adapter.myId = userId
+                    adapter.notifyDataSetChanged()
+                }
+            }
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -100,6 +129,20 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
         }
     }
 
+    private fun showAuthDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Нужно войти")
+            .setMessage("чтобы создать событие, войдите или зарегистрируйтесь")
+            .setPositiveButton("Войти") { _, _ ->
+                (requireActivity() as MainActivity).openLogin()
+            }
+            .setNegativeButton("Регистрация") { _, _ ->
+                (requireActivity() as MainActivity).openRegister()
+            }
+            .setNeutralButton("Отмена", null)
+            .show()
+    }
+
     private fun openEventDetails(event: Event) {
         val fragment = EventDetailsFragment()
         val arguments = Bundle()
@@ -113,8 +156,20 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
         arguments.putLong("eventAt", event.eventAt ?: 0)
         arguments.putString("type", event.typeFormatted)
         arguments.putString("link", event.link)
+        arguments.putBoolean("likedByMe", event.likedByMe == true)
         if (event.speakerIds != null && event.speakerIds.isNotEmpty()) {
             arguments.putStringArrayList("speakerIds", ArrayList(event.speakerIds))
+        }
+        if (event.participantIds != null && event.participantIds.isNotEmpty()) {
+            arguments.putStringArrayList("participantIds", ArrayList(event.participantIds))
+        }
+        if (event.attachment != null) {
+            arguments.putString("attachmentType", event.attachment?.type?.name)
+            arguments.putString("attachmentUrl", event.attachment?.url)
+        }
+        event.coords?.let { coords ->
+            arguments.putDouble("lat", coords.lat)
+            arguments.putDouble("lng", coords.lng)
         }
         fragment.arguments = arguments
 
@@ -125,15 +180,16 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
     }
 
     private fun showEventMenu(event: Event) {
+        val menuItems = arrayOf("Удалить")
         AlertDialog.Builder(requireContext())
             .setTitle("действия с событием")
-            .setItems(arrayOf("Редактировать", "Удалить")) { _, which ->
-                if (which == 1) {
-                    deleteEvent(event)
-                }
+            .setItems(menuItems) { _, _ ->
+                deleteEvent(event)
             }
             .show()
     }
+
+    //Не нашел энпоинт редактирования как жить дальше
 
     private fun deleteEvent(event: Event) {
         AlertDialog.Builder(requireContext())
@@ -170,3 +226,4 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
         _binding = null
     }
 }
+

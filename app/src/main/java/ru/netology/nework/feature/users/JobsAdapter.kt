@@ -1,6 +1,7 @@
 package ru.netology.nework.feature.users
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -8,6 +9,8 @@ import ru.netology.nework.core.model.Job
 import ru.netology.nework.databinding.ItemJobBinding
 
 class JobsAdapter(
+    private val showDelete: Boolean = false,
+    private val onJobClick: (Job) -> Unit = {},
     private val onDeleteClick: (Job) -> Unit = {}
 ) : ListAdapter<Job, JobsAdapter.JobHolder>(JobDiffCallback()) {
 
@@ -23,7 +26,15 @@ class JobsAdapter(
         holder.binding.jobCompany.text = job.company
         holder.binding.jobPosition.text = job.position
         holder.binding.jobPeriod.text = job.periodFormatted
+
+        if (showDelete) {
+            holder.binding.jobDeleteButton.visibility = View.VISIBLE
+        } else {
+            holder.binding.jobDeleteButton.visibility = View.GONE
+        }
+
         holder.binding.jobDeleteButton.setOnClickListener { onDeleteClick(job) }
+        holder.binding.root.setOnClickListener { onJobClick(job) }
     }
 
     private class JobDiffCallback : DiffUtil.ItemCallback<Job>() {

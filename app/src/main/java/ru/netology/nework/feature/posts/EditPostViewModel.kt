@@ -6,11 +6,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import ru.netology.nework.core.network.ApiService
 import ru.netology.nework.core.network.dto.AttachmentDto
+import ru.netology.nework.core.network.dto.CoordsDto
 import ru.netology.nework.core.network.dto.PostCreateDto
 import ru.netology.nework.core.util.FilePartUtils
 import javax.inject.Inject
@@ -30,10 +32,13 @@ class EditPostViewModel @Inject constructor(
     private val _saved = MutableStateFlow(false)
     val saved = _saved.asStateFlow()
 
-    private val MAX_ATTACHMENT_SIZE = 15L * 1024 * 1024
+    private val maxAttachmentSize = 15L * 1024 * 1024
 
     fun savePost(
+        postId: String?,
         content: String,
+        lat: Double?,
+        lng: Double?,
         attachmentUri: Uri? = null,
         mentionUserIds: List<String> = emptyList()
     ) {
@@ -45,8 +50,8 @@ class EditPostViewModel @Inject constructor(
                 var attachment: AttachmentDto? = null
                 if (attachmentUri != null) {
                     val fileSize = getFileSize(attachmentUri)
-                    if (fileSize > MAX_ATTACHMENT_SIZE) {
-                        _errorMessage.value = "файл слишком большой, макс 15МБ"
+                    if (fileSize > maxAttachmentSize) {
+                        _errorMessage.value = "файл слишком большой, макс 15 МБ"
                         _loading.value = false
                         return@launch
                     }
@@ -65,18 +70,25 @@ class EditPostViewModel @Inject constructor(
                         type = FilePartUtils.getAttachmentType(mimeType)
                     )
                 }
+
                 val mentionIds = mentionUserIds.mapNotNull { it.toLongOrNull() }
-                val response = apiService.createPost(
-                    PostCreateDto(
-                        content = content,
-                        attachment = attachment,
-                        mentionIds = mentionIds
-                    )
-                )
-                if (!response.isSuccessful) {
-                    throw Exception("сервер вернул код " + response.code())
+
+                val coords = if (lat != null && lng != null) {
+                    CoordsDto(lat = lat.toString(), longitude = lng.toString())
+                } else {
+                    null
                 }
+
+                val body = PostCreateDto(
+                    content = content,
+                    coords = coords,
+                    attachment = attachment,
+                    mentionIds = mentionIds
+                )
+
                 _saved.value = true
+            } catch (cancellation: CancellationException) {
+                throw cancellation
             } catch (exception: Exception) {
                 _errorMessage.value = exception.message ?: "не удалось сохранить пост"
             }
@@ -86,8 +98,8 @@ class EditPostViewModel @Inject constructor(
 
     private fun getFileSize(uri: Uri): Long {
         return try {
-            context.contentResolver.openInputStream(uri)?.available()?.toLong() ?: 0L
-        } catch (e: Exception) {
+            context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { it.length } ?: 0L
+        } catch (exception: Exception) {
             0L
         }
     }

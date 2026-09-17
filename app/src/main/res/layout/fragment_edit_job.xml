@@ -59,7 +59,22 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="@string/btn_job_dates" />
+            android:text="Дата начала" />
+
+        <Button
+            android:id="@+id/editJobEndDateButton"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Дата окончания" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/editJobStillWorking"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Работаю по сей день" />
 
         <TextView
             android:id="@+id/editJobDatesText"
@@ -67,6 +82,24 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:textColor="@color/gray"
+            android:visibility="gone" />
+
+        <ProgressBar
+            android:id="@+id/editJobProgress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:indeterminateTint="@color/purple_500"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/editJobError"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:textColor="@color/red"
             android:visibility="gone" />
 
         <com.google.android.material.button.MaterialButton

@@ -1,6 +1,8 @@
 package ru.netology.nework.feature.events
 
 import android.Manifest
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -31,6 +33,7 @@ import ru.netology.nework.feature.common.MapFragment
 import ru.netology.nework.feature.users.UsersSelectFragment
 import java.io.File
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -40,12 +43,15 @@ class EditEventFragment : Fragment(R.layout.fragment_edit_event) {
     private var _binding: FragmentEditEventBinding? = null
     private val binding get() = _binding!!
     private val viewModel: EditEventViewModel by viewModels()
+
+    private var eventId: String? = null
     private var attachmentUri: Uri? = null
     private var cameraPhotoUri: Uri? = null
     private var pendingStorageAction: (() -> Unit)? = null
     private var selectedSpeakerUserIds: MutableList<String> = mutableListOf()
     private var eventDateMillis: Long? = null
-    private var currentLocation: String = ""
+    private var currentLat: Double? = null
+    private var currentLng: Double? = null
 
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
@@ -105,6 +111,34 @@ class EditEventFragment : Fragment(R.layout.fragment_edit_event) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentEditEventBinding.bind(view)
 
+        eventId = arguments?.getString("eventId")
+        val initialContent = arguments?.getString("content").orEmpty()
+        val initialType = arguments?.getString("type")
+        val initialEventAt = arguments?.getLong("eventAt", 0L) ?: 0L
+        val initialLat = arguments?.getDouble("lat")
+        val initialLng = arguments?.getDouble("lng")
+
+        binding.editEventText.setText(initialContent)
+
+        if (initialType == "OFFLINE") {
+            binding.editEventTypeOffline.isChecked = true
+        } else {
+            binding.editEventTypeOnline.isChecked = true
+        }
+
+        if (initialEventAt > 0) {
+            eventDateMillis = initialEventAt
+            val format = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
+            binding.editEventDateText.isVisible = true
+            binding.editEventDateText.text = format.format(Date(initialEventAt))
+        }
+
+        if (initialLat != null && initialLng != null) {
+            currentLat = initialLat
+            currentLng = initialLng
+        }
+        updateLocationText()
+
         requireActivity().addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menuInflater.inflate(R.menu.menu_save, menu)
@@ -151,10 +185,10 @@ class EditEventFragment : Fragment(R.layout.fragment_edit_event) {
                 .commit()
         }
 
-        parentFragmentManager.setFragmentResultListener("location_pick", viewLifecycleOwner) { requestKey, bundle ->
-            val lat = bundle.getDouble("lat")
-            val lng = bundle.getDouble("lng")
-            currentLocation = String.format("%.4f, %.4f", lat, lng)
+        parentFragmentManager.setFragmentResultListener("location_pick", viewLifecycleOwner) { _, bundle ->
+            currentLat = bundle.getDouble("lat")
+            currentLng = bundle.getDouble("lng")
+            updateLocationText()
         }
 
         binding.editEventRemoveAttachment.setOnClickListener {
@@ -194,47 +228,80 @@ class EditEventFragment : Fragment(R.layout.fragment_edit_event) {
         }
     }
 
+    private fun updateLocationText() {
+        val b = _binding ?: return
+        if (currentLat != null && currentLng != null) {
+            b.editEventLocationText.isVisible = true
+            b.editEventLocationText.text = String.format(
+                Locale.getDefault(),
+                "Локация: %.4f, %.4f",
+                currentLat,
+                currentLng
+            )
+        } else {
+            b.editEventLocationText.isVisible = false
+        }
+    }
+
+    private fun updateSpeakersText() {
+        val b = _binding ?: return
+        if (selectedSpeakerUserIds.isNotEmpty()) {
+            b.editEventSpeakersText.visibility = View.VISIBLE
+            b.editEventSpeakersText.text = "спикеры: " + selectedSpeakerUserIds.size
+        } else {
+            b.editEventSpeakersText.visibility = View.GONE
+        }
+    }
+
     private fun showDatePicker() {
-        val calendar = java.util.Calendar.getInstance()
+        val calendar = Calendar.getInstance()
         if (eventDateMillis != null) {
             calendar.timeInMillis = eventDateMillis!!
         }
-        val datePicker = android.app.DatePickerDialog(requireContext(),
+
+        val dateDialog = DatePickerDialog(
+            requireContext(),
             { _, year, month, day ->
-                val cal = java.util.Calendar.getInstance()
+                val cal = Calendar.getInstance()
                 cal.set(year, month, day)
-                val timePicker = android.app.TimePickerDialog(requireContext(),
+
+                val timeDialog = TimePickerDialog(
+                    requireContext(),
                     { _, hour, minute ->
-                        cal.set(java.util.Calendar.HOUR_OF_DAY, hour)
-                        cal.set(java.util.Calendar.MINUTE, minute)
+                        cal.set(Calendar.HOUR_OF_DAY, hour)
+                        cal.set(Calendar.MINUTE, minute)
                         eventDateMillis = cal.timeInMillis
                         val format = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
                         binding.editEventDateText.visibility = View.VISIBLE
                         binding.editEventDateText.text = format.format(Date(eventDateMillis!!))
                     },
-                    calendar.get(java.util.Calendar.HOUR_OF_DAY),
-                    calendar.get(java.util.Calendar.MINUTE),
-                    true)
-                timePicker.show()
+                    calendar.get(Calendar.HOUR_OF_DAY),
+                    calendar.get(Calendar.MINUTE),
+                    true
+                )
+                timeDialog.show()
             },
-            calendar.get(java.util.Calendar.YEAR),
-            calendar.get(java.util.Calendar.MONTH),
-            calendar.get(java.util.Calendar.DAY_OF_MONTH))
-        datePicker.show()
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
+        dateDialog.show()
     }
 
     private fun showAttachDialog() {
         AlertDialog.Builder(requireContext())
             .setTitle("вложение")
             .setItems(arrayOf("Галерея", "Видео", "Аудио")) { _, which ->
-                when (which) {
-                    0 -> requestStorage(Manifest.permission.READ_MEDIA_IMAGES) {
+                if (which == 0) {
+                    requestStorage(Manifest.permission.READ_MEDIA_IMAGES) {
                         pickImageLauncher.launch("image/*")
                     }
-                    1 -> requestStorage(Manifest.permission.READ_MEDIA_VIDEO) {
+                } else if (which == 1) {
+                    requestStorage(Manifest.permission.READ_MEDIA_VIDEO) {
                         pickVideoLauncher.launch("video/*")
                     }
-                    2 -> requestStorage(Manifest.permission.READ_MEDIA_AUDIO) {
+                } else {
+                    requestStorage(Manifest.permission.READ_MEDIA_AUDIO) {
                         pickAudioLauncher.launch("audio/*")
                     }
                 }
@@ -247,6 +314,7 @@ class EditEventFragment : Fragment(R.layout.fragment_edit_event) {
             requireContext(),
             Manifest.permission.CAMERA
         ) == PackageManager.PERMISSION_GRANTED
+
         if (granted) {
             openCamera()
         } else {
@@ -255,15 +323,16 @@ class EditEventFragment : Fragment(R.layout.fragment_edit_event) {
     }
 
     private fun requestStorage(permission: String, action: () -> Unit) {
-        val actualPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            permission
-        } else {
-            Manifest.permission.READ_EXTERNAL_STORAGE
+        var actualPermission = permission
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            actualPermission = Manifest.permission.READ_EXTERNAL_STORAGE
         }
+
         val granted = ContextCompat.checkSelfPermission(
             requireContext(),
             actualPermission
         ) == PackageManager.PERMISSION_GRANTED
+
         if (granted) {
             action()
         } else {
@@ -309,25 +378,29 @@ class EditEventFragment : Fragment(R.layout.fragment_edit_event) {
         binding.editEventAttachmentPreview.setImageDrawable(null)
     }
 
-    private fun updateSpeakersText() {
-        val b = _binding ?: return
-        if (selectedSpeakerUserIds.isNotEmpty()) {
-            b.editEventSpeakersText.visibility = View.VISIBLE
-            b.editEventSpeakersText.text = "спикеры: " + selectedSpeakerUserIds.size
-        } else {
-            b.editEventSpeakersText.visibility = View.GONE
-        }
-    }
-
     private fun saveEvent() {
         val content = binding.editEventText.text?.toString()?.trim() ?: ""
         if (content.isEmpty()) {
             Toast.makeText(requireContext(), "введите текст события", Toast.LENGTH_SHORT).show()
             return
         }
-        val isOnline = binding.editEventTypeOnline.isChecked
-        val type = if (isOnline) "ONLINE" else "OFFLINE"
-        viewModel.saveEvent(content, attachmentUri, type, eventDateMillis, selectedSpeakerUserIds)
+
+        var type = "ONLINE"
+        if (binding.editEventTypeOffline.isChecked) {
+            type = "OFFLINE"
+        }
+
+
+        viewModel.saveEvent(
+            eventId = eventId,
+            content = content,
+            type = type,
+            eventDateMillis = eventDateMillis,
+            lat = currentLat,
+            lng = currentLng,
+            attachmentUri = attachmentUri,
+            speakerUserIds = selectedSpeakerUserIds
+        )
     }
 
     override fun onDestroyView() {

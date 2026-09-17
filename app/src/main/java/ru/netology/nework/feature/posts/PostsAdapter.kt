@@ -1,8 +1,11 @@
 package ru.netology.nework.feature.posts
 
+import android.content.Intent
+import android.net.Uri
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
+import android.widget.Toast
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import com.bumptech.glide.Glide
@@ -19,7 +22,10 @@ class PostsAdapter(
     private val onLikeClick: (Post) -> Unit = {}
 ) : ListAdapter<Post, PostsAdapter.PostHolder>(PostDiffCallback()) {
 
-    class PostHolder(val binding: ItemPostBinding) : androidx.recyclerview.widget.RecyclerView.ViewHolder(binding.root)
+    var myId: String? = null
+
+    class PostHolder(val binding: ItemPostBinding) :
+        androidx.recyclerview.widget.RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostHolder {
         val binding = ItemPostBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -38,6 +44,12 @@ class PostsAdapter(
         holder.binding.postLikeButton.text = (post.likeOwnerIdsCount ?: 0).toString()
         holder.binding.postLikeButton.isChecked = post.likedByMe == true
 
+        if (post.authorId != null && myId != null && post.authorId == myId) {
+            holder.binding.postMenuButton.visibility = View.VISIBLE
+        } else {
+            holder.binding.postMenuButton.visibility = View.GONE
+        }
+
         if (post.authorAvatarUrl.isNullOrBlank()) {
             holder.binding.postAvatar.setImageResource(R.drawable.bg_avatar)
         } else {
@@ -49,50 +61,67 @@ class PostsAdapter(
         }
 
         if (post.link.isNullOrBlank()) {
-            holder.binding.postLink.visibility = android.view.View.GONE
+            holder.binding.postLink.visibility = View.GONE
         } else {
-            holder.binding.postLink.visibility = android.view.View.VISIBLE
+            holder.binding.postLink.visibility = View.VISIBLE
             holder.binding.postLink.text = post.link
+            holder.binding.postLink.setOnClickListener {
+                try {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(post.link))
+                    holder.binding.root.context.startActivity(intent)
+                } catch (exception: Exception) {
+                    Toast.makeText(
+                        holder.binding.root.context,
+                        "не удалось открыть ссылку",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
         }
 
         val attachment = post.attachment
         when {
             attachment?.type == AttachmentType.IMAGE && attachment.url.isNullOrBlank() -> {
-                holder.binding.postAttachmentBlock.visibility = android.view.View.GONE
-                holder.binding.postPlayIcon.visibility = android.view.View.GONE
-                holder.binding.postAttachmentLabel.visibility = android.view.View.GONE
+                holder.binding.postAttachmentBlock.visibility = View.GONE
+                holder.binding.postPlayIcon.visibility = View.GONE
+                holder.binding.postAttachmentLabel.visibility = View.GONE
             }
+
             attachment?.type == AttachmentType.IMAGE -> {
-                holder.binding.postAttachmentBlock.visibility = android.view.View.VISIBLE
-                holder.binding.postAttachmentLabel.visibility = android.view.View.GONE
-                holder.binding.postPlayIcon.visibility = android.view.View.GONE
+                holder.binding.postAttachmentBlock.visibility = View.VISIBLE
+                holder.binding.postAttachmentLabel.visibility = View.GONE
+                holder.binding.postPlayIcon.visibility = View.GONE
                 Glide.with(holder.binding.postAttachmentImage.context)
                     .load(attachment.url)
                     .into(holder.binding.postAttachmentImage)
             }
+
             attachment?.type == AttachmentType.VIDEO && attachment.url.isNullOrBlank() -> {
-                holder.binding.postAttachmentBlock.visibility = android.view.View.GONE
-                holder.binding.postPlayIcon.visibility = android.view.View.GONE
-                holder.binding.postAttachmentLabel.visibility = android.view.View.GONE
+                holder.binding.postAttachmentBlock.visibility = View.GONE
+                holder.binding.postPlayIcon.visibility = View.GONE
+                holder.binding.postAttachmentLabel.visibility = View.GONE
             }
+
             attachment?.type == AttachmentType.VIDEO -> {
-                holder.binding.postAttachmentBlock.visibility = android.view.View.VISIBLE
-                holder.binding.postAttachmentLabel.visibility = android.view.View.GONE
-                holder.binding.postPlayIcon.visibility = android.view.View.VISIBLE
+                holder.binding.postAttachmentBlock.visibility = View.VISIBLE
+                holder.binding.postAttachmentLabel.visibility = View.GONE
+                holder.binding.postPlayIcon.visibility = View.VISIBLE
                 Glide.with(holder.binding.postAttachmentImage.context)
                     .load(attachment.url)
                     .into(holder.binding.postAttachmentImage)
             }
+
             attachment != null -> {
-                holder.binding.postAttachmentBlock.visibility = android.view.View.GONE
-                holder.binding.postPlayIcon.visibility = android.view.View.GONE
-                holder.binding.postAttachmentLabel.visibility = android.view.View.VISIBLE
+                holder.binding.postAttachmentBlock.visibility = View.GONE
+                holder.binding.postPlayIcon.visibility = View.GONE
+                holder.binding.postAttachmentLabel.visibility = View.VISIBLE
                 holder.binding.postAttachmentLabel.text = attachment.type.name
             }
+
             else -> {
-                holder.binding.postAttachmentBlock.visibility = android.view.View.GONE
-                holder.binding.postPlayIcon.visibility = android.view.View.GONE
-                holder.binding.postAttachmentLabel.visibility = android.view.View.GONE
+                holder.binding.postAttachmentBlock.visibility = View.GONE
+                holder.binding.postPlayIcon.visibility = View.GONE
+                holder.binding.postAttachmentLabel.visibility = View.GONE
             }
         }
 

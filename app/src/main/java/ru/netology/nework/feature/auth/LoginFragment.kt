@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
+import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -54,7 +55,6 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
             binding.loginLoginLayout.error = null
             binding.loginPasswordLayout.error = null
-            binding.loginError.visibility = View.GONE
 
             var hasError = false
             if (login.isEmpty()) {
@@ -85,10 +85,8 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.errorMessage.collect { message ->
                     if (message != null) {
-                        binding.loginError.visibility = View.VISIBLE
-                        binding.loginError.text = message
-                    } else {
-                        binding.loginError.visibility = View.GONE
+                        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+                        viewModel.clearError()
                     }
                 }
             }
@@ -98,6 +96,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.success.collect { success ->
                     if (success) {
+                        viewModel.resetState()
                         parentFragmentManager.popBackStack()
                     }
                 }

@@ -1,11 +1,8 @@
 package ru.netology.nework.feature.events
 
-import ru.netology.nework.core.model.Attachment
-import ru.netology.nework.core.model.AttachmentType
 import ru.netology.nework.core.model.Event
-import ru.netology.nework.core.model.EventType
 import ru.netology.nework.core.network.ApiService
-import java.time.Instant
+import ru.netology.nework.core.network.toEvent
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,48 +17,7 @@ class EventsRepository @Inject constructor(
             throw Exception("сервер вернул код ${response.code()}")
         }
         val body = response.body() ?: return emptyList()
-        return body.map { dto ->
-            val eventType = when (dto.type) {
-                ru.netology.nework.core.network.dto.EventTypeDto.ONLINE -> EventType.ONLINE
-                ru.netology.nework.core.network.dto.EventTypeDto.OFFLINE -> EventType.OFFLINE
-            }
-            Event(
-                id = dto.id.toString(),
-                authorId = dto.authorId.toString(),
-                authorName = dto.author,
-                authorAvatarUrl = dto.authorAvatar,
-                authorJob = dto.authorJob,
-                content = dto.content,
-                publishedAt = dto.published.toEpochMillis(),
-                eventAt = dto.datetime.toEpochMillis(),
-                type = eventType,
-                link = dto.link,
-                attachment = dto.attachment?.let { attachmentDto ->
-                    Attachment(
-                        type = when (attachmentDto.type) {
-                            ru.netology.nework.core.network.dto.AttachmentTypeDto.IMAGE -> AttachmentType.IMAGE
-                            ru.netology.nework.core.network.dto.AttachmentTypeDto.VIDEO -> AttachmentType.VIDEO
-                            ru.netology.nework.core.network.dto.AttachmentTypeDto.AUDIO -> AttachmentType.AUDIO
-                        },
-                        url = attachmentDto.url,
-                        localUri = null,
-                        sizeBytes = null
-                    )
-                },
-                participantIds = dto.participantsIds.map { it.toString() },
-                speakerIds = dto.speakerIds.map { it.toString() },
-                likeOwnerIdsCount = dto.likeOwnerIds.size.toLong(),
-                likedByMe = dto.likedByMe
-            )
-        }
-    }
-
-    private fun String.toEpochMillis(): Long {
-        return try {
-            Instant.parse(this).toEpochMilli()
-        } catch (e: Exception) {
-            0L
-        }
+        return body.map { it.toEvent() }
     }
 
     suspend fun likeEvent(eventId: Long) {

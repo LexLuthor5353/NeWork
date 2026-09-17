@@ -3,6 +3,7 @@ package ru.netology.nework.feature.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -30,6 +31,8 @@ class AuthViewModel @Inject constructor(
             try {
                 authRepository.login(login, password)
                 _success.value = true
+            } catch (cancellation: CancellationException) {
+                throw cancellation
             } catch (exception: Exception) {
                 _errorMessage.value = exception.message ?: "не удалось войти"
             }
@@ -37,7 +40,12 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun register(login: String, password: String, name: String, avatarUri: android.net.Uri? = null) {
+    fun register(
+        login: String,
+        password: String,
+        name: String,
+        avatarUri: android.net.Uri? = null
+    ) {
         viewModelScope.launch {
             _loading.value = true
             _errorMessage.value = null
@@ -45,11 +53,17 @@ class AuthViewModel @Inject constructor(
             try {
                 authRepository.register(login, password, name, avatarUri)
                 _success.value = true
+            } catch (cancellation: CancellationException) {
+                throw cancellation
             } catch (exception: Exception) {
                 _errorMessage.value = exception.message ?: "не удалось зарегистрироваться"
             }
             _loading.value = false
         }
+    }
+
+    fun clearError() {
+        _errorMessage.value = null
     }
 
     fun resetState() {

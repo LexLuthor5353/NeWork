@@ -22,7 +22,6 @@ import ru.netology.nework.core.session.TokenStore
 import ru.netology.nework.databinding.ActivityMainBinding
 import ru.netology.nework.feature.auth.LoginFragment
 import ru.netology.nework.feature.auth.RegisterFragment
-import ru.netology.nework.feature.common.MapFragment
 import ru.netology.nework.feature.events.EventsFragment
 import ru.netology.nework.feature.posts.EditPostFragment
 import ru.netology.nework.feature.posts.PostsFragment
@@ -64,23 +63,21 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-                when (menuItem.itemId) {
-                    R.id.actionLogin -> {
-                        openLogin()
-                        return true
-                    }
-                    R.id.actionRegister -> {
-                        openRegister()
-                        return true
-                    }
-                    R.id.actionLogout -> {
-                        logout()
-                        return true
-                    }
-                    R.id.actionProfile -> {
-                        openMyProfile()
-                        return true
-                    }
+                if (menuItem.itemId == R.id.actionLogin) {
+                    openLogin()
+                    return true
+                }
+                if (menuItem.itemId == R.id.actionRegister) {
+                    openRegister()
+                    return true
+                }
+                if (menuItem.itemId == R.id.actionLogout) {
+                    logout()
+                    return true
+                }
+                if (menuItem.itemId == R.id.actionProfile) {
+                    openMyProfile()
+                    return true
                 }
                 return false
             }
@@ -112,40 +109,51 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.bottomNavigation.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.menu_posts -> {
-                    openPosts()
-                    true
-                }
-                R.id.menu_events -> {
-                    openEvents()
-                    true
-                }
-                R.id.menu_users -> {
-                    openUsers()
-                    true
-                }
-                R.id.menu_map -> {
-                    openMap()
-                    true
-                }
-                else -> false
+            if (item.itemId == R.id.menu_posts) {
+                openPosts()
+                true
+            } else if (item.itemId == R.id.menu_events) {
+                openEvents()
+                true
+            } else if (item.itemId == R.id.menu_users) {
+                openUsers()
+                true
+            } else {
+                false
             }
         }
     }
 
     private fun updateAuthMenu(menu: Menu) {
-        val showAuthActions = !isLoggedIn && !authScreen
-        menu.findItem(R.id.actionLogin).isVisible = showAuthActions
-        menu.findItem(R.id.actionRegister).isVisible = showAuthActions
-        menu.findItem(R.id.actionLogout).isVisible = isLoggedIn && !authScreen
-        menu.findItem(R.id.actionProfile).isVisible = isLoggedIn && !authScreen
+        val showAuth = !isLoggedIn && !authScreen
+        val showProfile = isLoggedIn && !authScreen
+
+        menu.findItem(R.id.actionLogin).isVisible = showAuth
+        menu.findItem(R.id.actionRegister).isVisible = showAuth
+        menu.findItem(R.id.actionLogout).isVisible = showProfile
+        menu.findItem(R.id.actionProfile).isVisible = showProfile
     }
 
     private fun updateScreenState() {
+        val current = supportFragmentManager.findFragmentById(R.id.container)
+        val isTopLevel = current is PostsFragment || current is EventsFragment || current is UsersFragment
+
+        if (current is ru.netology.nework.feature.posts.PostDetailsFragment) {
+            supportActionBar?.title = "Пост"
+        } else if (current is ru.netology.nework.feature.events.EventDetailsFragment) {
+            supportActionBar?.title = "Событие"
+        } else if (current is ru.netology.nework.feature.users.LikersFragment) {
+            supportActionBar?.title = "Лайки"
+        } else if (current is ru.netology.nework.feature.users.UserProfileFragment) {
+            val currentTitle = supportActionBar?.title
+            if (currentTitle.isNullOrEmpty()) {
+                supportActionBar?.title = getString(R.string.menu_profile)
+            }
+        }
+
         val hasBackStack = supportFragmentManager.backStackEntryCount > 0
-        supportActionBar?.setDisplayHomeAsUpEnabled(hasBackStack)
-        binding.bottomNavigation.isVisible = !hasBackStack
+        supportActionBar?.setDisplayHomeAsUpEnabled(!isTopLevel && hasBackStack)
+        binding.bottomNavigation.isVisible = isTopLevel
         applyToolbarStyle()
         invalidateOptionsMenu()
     }
@@ -169,9 +177,7 @@ class MainActivity : AppCompatActivity() {
     private fun logout() {
         lifecycleScope.launch {
             tokenStore.clear()
-            while (supportFragmentManager.backStackEntryCount > 0) {
-                supportFragmentManager.popBackStackImmediate()
-            }
+            supportFragmentManager.popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
             authScreen = false
             openPosts()
         }
@@ -187,14 +193,13 @@ class MainActivity : AppCompatActivity() {
             try {
                 val user = usersRepository.loadUser(userId)
                 val fragment = UserProfileFragment()
-                val arguments = Bundle()
-                arguments.putString("userId", user.id)
-                arguments.putString("name", user.name ?: user.login)
-                arguments.putString("login", user.login)
-                arguments.putString("avatar", user.avatarUrl)
-                arguments.putBoolean("isMyProfile", true)
-                fragment.arguments = arguments
-                supportActionBar?.title = getString(R.string.menu_profile)
+                val args = Bundle()
+                args.putString("userId", user.id)
+                args.putString("name", user.name ?: user.login)
+                args.putString("login", user.login)
+                args.putString("avatar", user.avatarUrl)
+                args.putBoolean("isMyProfile", true)
+                fragment.arguments = args
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.container, fragment)
                     .addToBackStack("profile")
@@ -233,15 +238,6 @@ class MainActivity : AppCompatActivity() {
         supportActionBar?.title = getString(R.string.menu_users)
         supportFragmentManager.beginTransaction()
             .replace(R.id.container, UsersFragment())
-            .commit()
-        updateScreenState()
-    }
-
-    private fun openMap() {
-        authScreen = false
-        supportActionBar?.title = getString(R.string.menu_map)
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.container, MapFragment.newInstance(pickLocation = false))
             .commit()
         updateScreenState()
     }

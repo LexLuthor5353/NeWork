@@ -132,7 +132,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/btn_like"
                 android:src="@drawable/ic_like_outlined_24"
-            app:tint="@color/gray" />
+                app:tint="@color/gray" />
 
             <TextView
                 android:id="@+id/eventDetailsLikeCount"

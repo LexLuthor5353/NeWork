@@ -2,19 +2,22 @@ package ru.netology.nework.feature.common
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.mapview.MapView
-import com.yandex.mapkit.MapKitFactory
 import dagger.hilt.android.AndroidEntryPoint
 import ru.netology.nework.core.config.AppSecrets
 import ru.netology.nework.databinding.FragmentMapBinding
@@ -29,10 +32,10 @@ class MapFragment : Fragment() {
     private var _binding: FragmentMapBinding? = null
     private val binding get() = _binding!!
     private var mapView: MapView? = null
-    private var mapKitInited = false
     private var pickLocation = false
     private var currentLat = 55.751574
     private var currentLng = 37.573856
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -64,6 +67,8 @@ class MapFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
+
         binding.mapConfirmButton.isVisible = pickLocation
         binding.mapCoordsText.isVisible = pickLocation
 
@@ -89,7 +94,7 @@ class MapFragment : Fragment() {
         ) == PackageManager.PERMISSION_GRANTED
 
         if (fineGranted || coarseGranted) {
-            showMap()
+            getCurrentLocation()
         } else {
             locationPermissionRequest.launch(
                 arrayOf(
@@ -100,14 +105,26 @@ class MapFragment : Fragment() {
         }
     }
 
-    private fun showMap() {
-        if (!mapKitInited) {
-            MapKitFactory.setApiKey(appSecrets.mapsApiKey)
-            MapKitFactory.initialize(requireContext().applicationContext)
-            mapKitInited = true
+    @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])//кровопийца
+    private fun getCurrentLocation() {
+        try {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+                if (location != null) {
+                    currentLat = location.latitude
+                    currentLng = location.longitude
+                    showMap()
+                } else {
+                    showMap()
+                }
+            }
+        } catch (e: Exception) {
+            showMap()
         }
+    }
 
+    private fun showMap() {
         binding.mapStubText.visibility = View.GONE
+
         if (mapView == null) {
             mapView = MapView(requireContext())
             val layoutParams = FrameLayout.LayoutParams(
@@ -118,26 +135,27 @@ class MapFragment : Fragment() {
         }
 
         val point = Point(currentLat, currentLng)
-        mapView?.map?.move(com.yandex.mapkit.map.CameraPosition(point, 17.0f, 0.0f, 0.0f))
+        val cameraPosition = com.yandex.mapkit.map.CameraPosition(point, 17.0f, 0.0f, 0.0f)
+        mapView?.map?.move(cameraPosition)
+        mapView?.map?.mapObjects?.clear()
+        mapView?.map?.mapObjects?.addPlacemark(point)
     }
 
     override fun onStart() {
         super.onStart()
-        if (mapKitInited) {
-            MapKitFactory.getInstance().onStart()
-        }
         mapView?.onStart()
     }
 
     override fun onStop() {
         super.onStop()
-        if (mapKitInited) {
-            MapKitFactory.getInstance().onStop()
-        }
         mapView?.onStop()
     }
 
     override fun onDestroyView() {
+        val currentMapView = mapView
+        if (currentMapView != null) {
+            binding.mapContainer.removeView(currentMapView)
+        }
         mapView = null
         _binding = null
         super.onDestroyView()

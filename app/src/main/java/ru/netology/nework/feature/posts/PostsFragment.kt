@@ -17,6 +17,7 @@ import ru.netology.nework.MainActivity
 import ru.netology.nework.R
 import ru.netology.nework.core.common.UiState
 import ru.netology.nework.core.model.Post
+import ru.netology.nework.core.session.TokenStore
 import ru.netology.nework.databinding.FragmentPostsBinding
 import javax.inject.Inject
 
@@ -24,12 +25,14 @@ import javax.inject.Inject
 class PostsFragment : Fragment(R.layout.fragment_posts) {
 
     @Inject
-    lateinit var tokenStore: ru.netology.nework.core.session.TokenStore
+    lateinit var tokenStore: TokenStore
 
     private var _binding: FragmentPostsBinding? = null
     private val binding get() = _binding!!
     private val viewModel: PostsViewModel by viewModels()
     private lateinit var adapter: PostsAdapter
+
+    private var myToken: String? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -56,16 +59,12 @@ class PostsFragment : Fragment(R.layout.fragment_posts) {
         binding.postsList.layoutManager = LinearLayoutManager(requireContext())
         binding.postsList.adapter = adapter
 
-        binding.postsLoginButton.setOnClickListener {
-            (requireActivity() as MainActivity).openLogin()
-        }
-
-        binding.postsRegisterButton.setOnClickListener {
-            (requireActivity() as MainActivity).openRegister()
-        }
-
         binding.postsAddButton.setOnClickListener {
-            (requireActivity() as MainActivity).openEditPost()
+            if (myToken.isNullOrBlank()) {
+                showAuthDialog()
+            } else {
+                (requireActivity() as MainActivity).openEditPost()
+            }
         }
 
         binding.postsRefresh.setColorSchemeResources(R.color.purple_500)
@@ -76,7 +75,16 @@ class PostsFragment : Fragment(R.layout.fragment_posts) {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 tokenStore.tokenFlow().collect { token ->
-                    binding.postsAuthBar.isVisible = token.isNullOrBlank()
+                    myToken = token
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                tokenStore.userIdFlow().collect { userId ->
+                    adapter.myId = userId
+                    adapter.notifyDataSetChanged()
                 }
             }
         }
@@ -118,6 +126,20 @@ class PostsFragment : Fragment(R.layout.fragment_posts) {
         }
     }
 
+    private fun showAuthDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Нужно войти")
+            .setMessage("чтобы создать пост, войдите или зарегистрируйтесь")
+            .setPositiveButton("Войти") { _, _ ->
+                (requireActivity() as MainActivity).openLogin()
+            }
+            .setNegativeButton("Регистрация") { _, _ ->
+                (requireActivity() as MainActivity).openRegister()
+            }
+            .setNeutralButton("Отмена", null)
+            .show()
+    }
+
     private fun openPostDetails(post: Post) {
         val fragment = PostDetailsFragment()
         val arguments = Bundle()
@@ -128,9 +150,26 @@ class PostsFragment : Fragment(R.layout.fragment_posts) {
         arguments.putString("content", post.content)
         arguments.putLong("likes", post.likeOwnerIdsCount ?: 0)
         arguments.putLong("publishedAt", post.publishedAt ?: 0)
+        arguments.putBoolean("likedByMe", post.likedByMe == true)
         arguments.putString("link", post.link)
         if (post.likeOwnerIds.isNotEmpty()) {
             arguments.putStringArrayList("likeOwnerIds", ArrayList(post.likeOwnerIds))
+        }
+        if (post.mentionedUserIds != null && post.mentionedUserIds.isNotEmpty()) {
+            arguments.putStringArrayList("mentionedUserIds", ArrayList(post.mentionedUserIds))
+        }
+        if (post.attachment != null) {
+            arguments.putString("attachmentType", post.attachment?.type?.name)
+            arguments.putString("attachmentUrl", post.attachment?.url)
+        }
+        arguments.putString("authorJob", post.authorJob)
+        if (post.mentionedUserIds != null && post.mentionedUserIds.isNotEmpty()) {
+            arguments.putStringArrayList("mentionedUserIds", ArrayList(post.mentionedUserIds))
+        }
+
+        post.coords?.let { coords ->
+            arguments.putDouble("lat", coords.lat)
+            arguments.putDouble("lng", coords.lng)
         }
         fragment.arguments = arguments
 
@@ -141,15 +180,15 @@ class PostsFragment : Fragment(R.layout.fragment_posts) {
     }
 
     private fun showPostMenu(post: Post) {
+        val menuItems = arrayOf("Удалить")
         AlertDialog.Builder(requireContext())
             .setTitle("действия с постом")
-            .setItems(arrayOf("Редактировать", "Удалить")) { _, which ->
-                if (which == 1) {
-                    deletePost(post)
-                }
+            .setItems(menuItems) { _, _ ->
+                deletePost(post)
             }
             .show()
     }
+    // я не нашел эндпоинта доя редактирования, хотя по ТЗ функционал должен быть
 
     private fun deletePost(post: Post) {
         AlertDialog.Builder(requireContext())
@@ -181,13 +220,9 @@ class PostsFragment : Fragment(R.layout.fragment_posts) {
         startActivity(Intent.createChooser(intent, getString(R.string.btn_share)))
     }
 
-    override fun onResume() {
-        super.onResume()
-        viewModel.loadPosts()
-    }
-
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
 }
+//без бутылки не разобраться уже

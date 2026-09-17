@@ -3,9 +3,12 @@ package ru.netology.nework.feature.users
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import ru.netology.nework.core.model.Job
+import ru.netology.nework.core.model.Post
 import ru.netology.nework.core.model.User
 import javax.inject.Inject
 
@@ -34,10 +37,32 @@ class UsersViewModel @Inject constructor(
             try {
                 val loadedUsers = usersRepository.loadUsers()
                 _users.value = loadedUsers
+            } catch (cancellation: CancellationException) {
+                throw cancellation
             } catch (exception: Exception) {
                 _errorMessage.value = exception.message ?: "не удалось загрузить пользователей"
             }
             _loading.value = false
         }
+    }
+
+    suspend fun loadUser(userId: String): User {
+        return usersRepository.loadUser(userId)
+    }
+
+    suspend fun loadUserWall(userId: String): List<Post> {
+        return usersRepository.loadUserWall(userId)
+    }
+
+    suspend fun loadUserJobs(userId: String): List<Job> {
+        return usersRepository.loadUserJobs(userId)
+    }
+
+    suspend fun loadMyJobs(): List<Job> {
+        return usersRepository.loadMyJobs()
+    }
+
+    suspend fun deleteJob(jobId: Long) {
+        usersRepository.deleteJob(jobId)
     }
 }

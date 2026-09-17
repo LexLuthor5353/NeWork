@@ -3,34 +3,31 @@ package ru.netology.nework.feature.users
 import android.app.AlertDialog
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.google.android.material.tabs.TabLayout
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import ru.netology.nework.R
 import ru.netology.nework.core.model.Job
 import ru.netology.nework.databinding.FragmentUserProfileBinding
 import ru.netology.nework.feature.posts.PostsAdapter
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
 
     private var _binding: FragmentUserProfileBinding? = null
     private val binding get() = _binding!!
-
-    @Inject
-    lateinit var usersRepository: UsersRepository
+    private val viewModel: UsersViewModel by viewModels()
 
     private var isMyProfile = false
-    private var myUserId: String? = null
+    private var currentUserId: String = ""
     private var wallAdapter: PostsAdapter? = null
     private var jobsAdapter: JobsAdapter? = null
 
@@ -40,10 +37,11 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
 
         val name = arguments?.getString("name") ?: "без имени"
         val login = arguments?.getString("login") ?: ""
-        val userId = arguments?.getString("userId") ?: ""
+        currentUserId = arguments?.getString("userId") ?: ""
         val avatar = arguments?.getString("avatar")
         isMyProfile = arguments?.getBoolean("isMyProfile", false) ?: false
-        myUserId = if (isMyProfile) userId else null
+
+        (requireActivity() as? androidx.appcompat.app.AppCompatActivity)?.supportActionBar?.title = "$name ($login)"
 
         binding.userProfileName.text = name
         binding.userProfileLogin.text = login
@@ -64,16 +62,26 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
         binding.userProfileWallList.layoutManager = LinearLayoutManager(requireContext())
         binding.userProfileWallList.adapter = wallAdapter
 
-        jobsAdapter = JobsAdapter { job ->
-            showDeleteJobDialog(job)
-        }
+        jobsAdapter = JobsAdapter(
+            showDelete = isMyProfile,
+            onJobClick = { job ->
+                if (isMyProfile) {
+                    openEditJobFragment(job)
+                }
+            },
+            onDeleteClick = { job ->
+                if (isMyProfile) {
+                    showDeleteJobDialog(job)
+                }
+            }
+        )
         binding.userProfileJobsList.layoutManager = LinearLayoutManager(requireContext())
         binding.userProfileJobsList.adapter = jobsAdapter
 
         if (isMyProfile) {
             binding.userProfileAddJobFab.visibility = View.VISIBLE
             binding.userProfileAddJobFab.setOnClickListener {
-                openEditJobFragment()
+                openEditJobFragment(null)
             }
         } else {
             binding.userProfileAddJobFab.visibility = View.GONE
@@ -97,9 +105,15 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
             }
         })
 
-        if (userId.isNotEmpty()) {
-            loadUserWall(userId)
-            loadUserJobs(userId)
+        parentFragmentManager.setFragmentResultListener("job_saved", viewLifecycleOwner) { _, _ ->
+            if (currentUserId.isNotEmpty()) {
+                loadUserJobs(currentUserId)
+            }
+        }
+
+        if (currentUserId.isNotEmpty()) {
+            loadUserWall(currentUserId)
+            loadUserJobs(currentUserId)
         }
 
         binding.userProfileWallList.visibility = View.VISIBLE
@@ -109,10 +123,13 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
     private fun loadUserWall(userId: String) {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val wallPosts = usersRepository.loadUserWall(userId)
+                val wallPosts = viewModel.loadUserWall(userId)
                 wallAdapter?.submitList(wallPosts)
                 binding.userProfileWallList.isVisible = wallPosts.isNotEmpty()
+            } catch (cancellation: CancellationException) {
+                throw cancellation
             } catch (exception: Exception) {
+                Toast.makeText(requireContext(), "не удалось загрузить стену", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -121,12 +138,15 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val jobs = if (isMyProfile) {
-                    usersRepository.loadMyJobs()
+                    viewModel.loadMyJobs()
                 } else {
-                    usersRepository.loadUserJobs(userId)
+                    viewModel.loadUserJobs(userId)
                 }
                 jobsAdapter?.submitList(jobs)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
             } catch (exception: Exception) {
+                Toast.makeText(requireContext(), "не удалось загрузить работы", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -143,27 +163,34 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
     }
 
     private fun deleteJob(job: Job) {
-        job.id?.toLongOrNull()?.let { jobId ->
-            viewLifecycleOwner.lifecycleScope.launch {
-                try {
-                    usersRepository.deleteJob(jobId)
-                    val currentJobs = jobsAdapter?.currentList?.toMutableList() ?: mutableListOf()
-                    currentJobs.removeAll { it.id == job.id }
-                    jobsAdapter?.submitList(currentJobs)
-                } catch (exception: Exception) {
+        val jobId = job.id?.toLongOrNull() ?: return
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                viewModel.deleteJob(jobId)
+                if (currentUserId.isNotEmpty()) {
+                    loadUserJobs(currentUserId)
                 }
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (exception: Exception) {
+                Toast.makeText(requireContext(), "не удалось удалить работу", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    private fun openEditJobFragment() {
+    private fun openEditJobFragment(job: Job?) {
         val fragment = EditJobFragment()
-        fragment.isCreating = true
-        fragment.onJobSaved = {
-            if (myUserId != null) {
-                loadUserJobs(myUserId!!)
-            }
+        val arguments = Bundle()
+        if (job != null) {
+            arguments.putString("jobId", job.id)
+            arguments.putString("company", job.company)
+            arguments.putString("position", job.position)
+            arguments.putString("link", job.link)
+            job.startAt?.let { arguments.putLong("startAt", it) }
+            job.finishAt?.let { arguments.putLong("finishAt", it) }
         }
+        fragment.arguments = arguments
         parentFragmentManager.beginTransaction()
             .replace(R.id.container, fragment)
             .addToBackStack("edit_job")
@@ -171,6 +198,7 @@ class UserProfileFragment : Fragment(R.layout.fragment_user_profile) {
     }
 
     override fun onDestroyView() {
+        (requireActivity() as? androidx.appcompat.app.AppCompatActivity)?.supportActionBar?.title = getString(R.string.app_name)
         super.onDestroyView()
         _binding = null
     }

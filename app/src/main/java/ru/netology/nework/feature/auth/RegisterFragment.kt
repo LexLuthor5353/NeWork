@@ -2,8 +2,8 @@ package ru.netology.nework.feature.auth
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -33,6 +33,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
     private var _binding: FragmentRegisterBinding? = null
     private val binding get() = _binding!!
     private val viewModel: AuthViewModel by viewModels()
+
     private var avatarUri: Uri? = null
     private var cameraPhotoUri: Uri? = null
 
@@ -50,7 +51,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         ActivityResultContracts.GetContent()
     ) { uri ->
         if (uri != null) {
-            showAvatar(uri)
+            checkAndShowAvatar(uri)
         }
     }
 
@@ -58,7 +59,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         ActivityResultContracts.TakePicture()
     ) { success ->
         if (success && cameraPhotoUri != null) {
-            showAvatar(cameraPhotoUri!!)
+            checkAndShowAvatar(cameraPhotoUri!!)
         }
     }
 
@@ -69,16 +70,6 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
             openCamera()
         } else {
             Toast.makeText(requireContext(), R.string.permission_camera_denied, Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private val storagePermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            openGallery()
-        } else {
-            Toast.makeText(requireContext(), R.string.permission_storage_denied, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -113,7 +104,6 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
             binding.registerNameLayout.error = null
             binding.registerPasswordLayout.error = null
             binding.registerPasswordRepeatLayout.error = null
-            binding.registerError.visibility = View.GONE
 
             var hasError = false
             if (login.isEmpty()) {
@@ -152,10 +142,8 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.errorMessage.collect { message ->
                     if (message != null) {
-                        binding.registerError.visibility = View.VISIBLE
-                        binding.registerError.text = message
-                    } else {
-                        binding.registerError.visibility = View.GONE
+                        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+                        viewModel.clearError()
                     }
                 }
             }
@@ -165,6 +153,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.success.collect { success ->
                     if (success) {
+                        viewModel.resetState()
                         parentFragmentManager.popBackStack()
                     }
                 }
@@ -184,7 +173,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
                 if (which == 0) {
                     requestCameraAndOpen()
                 } else {
-                    requestStorageAndOpenGallery()
+                    pickAvatarLauncher.launch("image/*")
                 }
             }
             .show()
@@ -202,23 +191,6 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         }
     }
 
-    private fun requestStorageAndOpenGallery() {
-        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Manifest.permission.READ_MEDIA_IMAGES
-        } else {
-            Manifest.permission.READ_EXTERNAL_STORAGE
-        }
-        val granted = ContextCompat.checkSelfPermission(
-            requireContext(),
-            permission
-        ) == PackageManager.PERMISSION_GRANTED
-        if (granted) {
-            openGallery()
-        } else {
-            storagePermissionLauncher.launch(permission)
-        }
-    }
-
     private fun openCamera() {
         val photosDir = File(requireContext().cacheDir, "photos")
         if (!photosDir.exists()) {
@@ -233,8 +205,30 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         takePhotoLauncher.launch(cameraPhotoUri)
     }
 
-    private fun openGallery() {
-        pickAvatarLauncher.launch("image/*")
+    private fun checkAndShowAvatar(uri: Uri) {
+        val mimeType = requireContext().contentResolver.getType(uri)
+        if (mimeType != "image/jpeg" && mimeType != "image/png") {
+            Toast.makeText(requireContext(), "нужен формат jpeg или png", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val options = BitmapFactory.Options()
+        options.inJustDecodeBounds = true
+        try {
+            requireContext().contentResolver.openInputStream(uri)?.use { stream ->
+                BitmapFactory.decodeStream(stream, null, options)
+            }
+        } catch (exception: Exception) {
+            Toast.makeText(requireContext(), "не удалось прочитать изображение", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (options.outWidth > 2048 || options.outHeight > 2048) {
+            Toast.makeText(requireContext(), "картинка больше 2048x2048", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        showAvatar(uri)
     }
 
     private fun showAvatar(uri: Uri) {
@@ -252,10 +246,10 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         val password = binding.registerPasswordEdit.text?.toString()?.trim() ?: ""
         val passwordRepeat = binding.registerPasswordRepeatEdit.text?.toString()?.trim() ?: ""
         return login.isNotEmpty() &&
-            name.isNotEmpty() &&
-            password.isNotEmpty() &&
-            passwordRepeat.isNotEmpty() &&
-            password == passwordRepeat
+                name.isNotEmpty() &&
+                password.isNotEmpty() &&
+                passwordRepeat.isNotEmpty() &&
+                password == passwordRepeat
     }
 
     private fun updateRegisterButton() {

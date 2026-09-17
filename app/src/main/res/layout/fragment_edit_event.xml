@@ -36,6 +36,14 @@
                 android:textColorHint="@color/gray"
                 android:textSize="16sp" />
 
+            <TextView
+                android:id="@+id/editEventLocationText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="@color/purple_700"
+                android:visibility="gone" />
+
             <LinearLayout
                 android:id="@+id/editEventOptionsRow"
                 android:layout_width="match_parent"

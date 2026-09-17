@@ -19,6 +19,7 @@ import ru.netology.nework.core.network.dto.UserDto
 import java.time.Instant
 
 fun PostDto.toPost(): Post {
+    android.util.Log.d("DtoMappers", "avatar=$authorAvatar attachment=${attachment?.url}")//сломалось отображение автарок и вложений не забыть убрать
     return Post(
         id = id.toString(),
         authorId = authorId.toString(),
@@ -27,6 +28,7 @@ fun PostDto.toPost(): Post {
         authorJob = authorJob,
         content = content,
         publishedAt = parseDate(published),
+        coords = coords?.toCoordinates(),
         link = link,
         attachment = attachment?.toAttachment(),
         mentionedUserIds = mentionIds.map { it.toString() },
@@ -51,6 +53,7 @@ fun EventDto.toEvent(): Event {
         publishedAt = parseDate(published),
         eventAt = parseDate(datetime),
         type = eventType,
+        coords = coords?.toCoordinates(),
         link = link,
         attachment = attachment?.toAttachment(),
         participantIds = participantsIds.map { it.toString() },
@@ -94,9 +97,9 @@ private fun AttachmentDto.toAttachment(): Attachment {
     )
 }
 
-private fun CoordsDto.toCoordinates(): Coordinates {
-    val latitude = lat.toDoubleOrNull() ?: 0.0
-    val longitudeValue = longitude.toDoubleOrNull() ?: 0.0
+private fun CoordsDto.toCoordinates(): Coordinates? {
+    val latitude = lat.toDoubleOrNull() ?: return null
+    val longitudeValue = longitude.toDoubleOrNull() ?: return null
     return Coordinates(latitude, longitudeValue)
 }
 

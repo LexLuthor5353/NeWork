@@ -12,8 +12,4 @@
         android:id="@+id/menu_users"
         android:icon="@drawable/ic_nav_users_24"
         android:title="@string/menu_users" />
-    <item
-        android:id="@+id/menu_map"
-        android:icon="@drawable/ic_nav_map_24"
-        android:title="@string/menu_map" />
 </menu>

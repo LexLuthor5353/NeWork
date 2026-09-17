@@ -22,7 +22,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.bumptech.glide.Glide
-import com.yandex.mapkit.MapKitFactory
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import ru.netology.nework.R
@@ -31,6 +30,7 @@ import ru.netology.nework.databinding.FragmentEditPostBinding
 import ru.netology.nework.feature.common.MapFragment
 import ru.netology.nework.feature.users.UsersSelectFragment
 import java.io.File
+import java.util.Locale
 
 @AndroidEntryPoint
 class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
@@ -38,11 +38,14 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
     private var _binding: FragmentEditPostBinding? = null
     private val binding get() = _binding!!
     private val viewModel: EditPostViewModel by viewModels()
+
+    private var postId: String? = null
+    private var currentLat: Double? = null
+    private var currentLng: Double? = null
     private var attachmentUri: Uri? = null
     private var cameraPhotoUri: Uri? = null
     private var pendingStorageAction: (() -> Unit)? = null
     private var selectedMentionUserIds: MutableList<String> = mutableListOf()
-    private var currentLocation: String = ""
 
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
@@ -102,6 +105,14 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentEditPostBinding.bind(view)
 
+        postId = arguments?.getString("postId")
+        val initialContent = arguments?.getString("content").orEmpty()
+        currentLat = arguments?.getDouble("lat")
+        currentLng = arguments?.getDouble("lng")
+
+        binding.editPostText.setText(initialContent)
+        updateLocationText()
+
         requireActivity().addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menuInflater.inflate(R.menu.menu_save, menu)
@@ -129,6 +140,11 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
             fragment.onUsersSelected = { userIds ->
                 selectedMentionUserIds.clear()
                 selectedMentionUserIds.addAll(userIds)
+                Toast.makeText(
+                    requireContext(),
+                    "выбрано упомянутых: ${selectedMentionUserIds.size}",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
             parentFragmentManager.beginTransaction()
                 .replace(R.id.container, fragment)
@@ -143,14 +159,35 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
                 .commit()
         }
 
-        parentFragmentManager.setFragmentResultListener("location_pick", viewLifecycleOwner) { requestKey, bundle ->
-            val lat = bundle.getDouble("lat")
-            val lng = bundle.getDouble("lng")
-            currentLocation = String.format("%.4f, %.4f", lat, lng)
+        parentFragmentManager.setFragmentResultListener("location_pick", viewLifecycleOwner) { _, bundle ->
+            currentLat = bundle.getDouble("lat")
+            currentLng = bundle.getDouble("lng")
+            updateLocationText()
         }
 
         binding.editPostRemoveAttachment.setOnClickListener {
             clearAttachment()
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.loading.collect { loading ->
+                    binding.editPostProgress.isVisible = loading
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.errorMessage.collect { message ->
+                    if (message != null) {
+                        binding.editPostError.visibility = View.VISIBLE
+                        binding.editPostError.text = message
+                    } else {
+                        binding.editPostError.visibility = View.GONE
+                    }
+                }
+            }
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -162,6 +199,21 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
                     }
                 }
             }
+        }
+    }
+
+    private fun updateLocationText() {
+        val b = _binding ?: return
+        if (currentLat != null && currentLng != null) {
+            b.editPostLocationText.isVisible = true
+            b.editPostLocationText.text = String.format(
+                Locale.getDefault(),
+                "Локация: %.4f, %.4f",
+                currentLat,
+                currentLng
+            )
+        } else {
+            b.editPostLocationText.isVisible = false
         }
     }
 
@@ -257,7 +309,14 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
             Toast.makeText(requireContext(), "введите текст поста", Toast.LENGTH_SHORT).show()
             return
         }
-        viewModel.savePost(content, attachmentUri, selectedMentionUserIds)
+        viewModel.savePost(
+            postId = postId,
+            content = content,
+            lat = currentLat,
+            lng = currentLng,
+            attachmentUri = attachmentUri,
+            mentionUserIds = selectedMentionUserIds
+        )
     }
 
     override fun onDestroyView() {

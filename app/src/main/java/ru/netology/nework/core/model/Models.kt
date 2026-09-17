@@ -37,6 +37,7 @@ data class Post(
     val authorJob: String?,
     val content: String,
     val publishedAt: Long?,
+    val coords: Coordinates?,
     val link: String?,
     val attachment: Attachment?,
     val mentionedUserIds: List<String>?,
@@ -66,6 +67,7 @@ data class Event(
     val publishedAt: Long?,
     val eventAt: Long?,
     val type: EventType,
+    val coords: Coordinates?,
     val link: String?,
     val attachment: Attachment?,
     val participantIds: List<String>?,
@@ -75,13 +77,13 @@ data class Event(
 ) {
     val publishedFormatted: String
         get() = publishedAt?.let {
-            val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm", Locale.getDefault())
+            val formatter = DateTimeFormatter.ofPattern("dd.MM.yy HH:mm", Locale.getDefault())
             formatter.format(Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDateTime())
         } ?: ""
 
     val eventAtFormatted: String
-        get() = eventAt?.let {
-            val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm", Locale.getDefault())
+        get() = publishedAt?.let {
+            val formatter = DateTimeFormatter.ofPattern("dd.MM.yy HH:mm", Locale.getDefault())
             formatter.format(Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDateTime())
         } ?: ""
 
