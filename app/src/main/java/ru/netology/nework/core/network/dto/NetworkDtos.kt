@@ -123,6 +123,8 @@ data class JobDto(
 )
 
 data class EventCreateDto(
+    @SerializedName("id")
+    val id: Long? = null,
     @SerializedName("content")
     val content: String,
     @SerializedName("type")
@@ -140,6 +142,8 @@ data class EventCreateDto(
 )
 
 data class JobCreateDto(
+    @SerializedName("id")
+    val id: Long? = null,
     @SerializedName("name")
     val name: String,
     @SerializedName("position")

@@ -180,15 +180,39 @@ class PostsFragment : Fragment(R.layout.fragment_posts) {
     }
 
     private fun showPostMenu(post: Post) {
-        val menuItems = arrayOf("Удалить")
+        val menuItems = arrayOf("Редактировать", "Удалить")
         AlertDialog.Builder(requireContext())
             .setTitle("действия с постом")
-            .setItems(menuItems) { _, _ ->
-                deletePost(post)
+            .setItems(menuItems) { _, which ->
+                if (which == 0) {
+                    editPost(post)
+                } else {
+                    deletePost(post)
+                }
             }
             .show()
     }
-    // я не нашел эндпоинта доя редактирования, хотя по ТЗ функционал должен быть
+
+    private fun editPost(post: Post) {
+        val fragment = EditPostFragment()
+        val arguments = Bundle()
+        arguments.putString("postId", post.id)
+        arguments.putString("content", post.content)
+        arguments.putString("authorJob", post.authorJob)
+        arguments.putString("link", post.link)
+        post.coords?.let { coords ->
+            arguments.putDouble("lat", coords.lat)
+            arguments.putDouble("lng", coords.lng)
+        }
+        fragment.arguments = arguments
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.container, fragment)
+            .addToBackStack("edit_post")
+            .commit()
+    }
+
+
+    // я не нашел эндпоинта доя редактирования, хотя по ТЗ функционал должен быть. юпд нашел в комментах как сделать, зря голову ломал
 
     private fun deletePost(post: Post) {
         AlertDialog.Builder(requireContext())

@@ -10,6 +10,8 @@ data class AuthDto(
 )
 
 data class PostCreateDto(
+    @SerializedName("id")
+    val id: Long? = null,
     @SerializedName("content")
     val content: String,
     @SerializedName("coords")

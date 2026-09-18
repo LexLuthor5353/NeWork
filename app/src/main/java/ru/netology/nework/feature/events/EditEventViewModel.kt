@@ -50,27 +50,22 @@ class EditEventViewModel @Inject constructor(
 
             try {
                 var attachment: AttachmentDto? = null
-
                 if (attachmentUri != null) {
                     val fileSize = getFileSize(attachmentUri)
                     if (fileSize > 15L * 1024 * 1024) {
-                        _errorMessage.value = "файл слишком большой, максимально 15 МБ"
+                        _errorMessage.value = "файл слишком большой, макс 15 МБ"
                         _loading.value = false
                         return@launch
                     }
-
                     val filePart = FilePartUtils.createPart(context, attachmentUri)
                     val uploadResponse = apiService.uploadMedia(filePart)
-
                     if (!uploadResponse.isSuccessful) {
                         throw Exception("не удалось загрузить файл, код " + uploadResponse.code())
                     }
-
                     val uploadBody = uploadResponse.body()
                     if (uploadBody == null) {
                         throw Exception("пустой ответ при загрузке файла")
                     }
-
                     val mimeType = FilePartUtils.getMimeType(context, attachmentUri)
                     attachment = AttachmentDto(
                         url = uploadBody.url,
@@ -91,6 +86,7 @@ class EditEventViewModel @Inject constructor(
                 }
 
                 val body = EventCreateDto(
+                    id = eventId?.toLongOrNull(),
                     content = content,
                     type = type,
                     datetime = datetimeStr,
@@ -99,6 +95,11 @@ class EditEventViewModel @Inject constructor(
                     speakerIds = speakerIds
                 )
 
+                val response = apiService.createEvent(body)
+
+                if (!response.isSuccessful) {
+                    throw Exception("сервер вернул код " + response.code())
+                }
                 _saved.value = true
             } catch (cancellation: CancellationException) {
                 throw cancellation

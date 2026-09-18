@@ -73,19 +73,24 @@ class EditPostViewModel @Inject constructor(
 
                 val mentionIds = mentionUserIds.mapNotNull { it.toLongOrNull() }
 
-                val coords = if (lat != null && lng != null) {
-                    CoordsDto(lat = lat.toString(), longitude = lng.toString())
-                } else {
-                    null
+                var coordsDto: CoordsDto? = null
+                if (lat != null && lng != null) {
+                    coordsDto = CoordsDto(lat = lat.toString(), longitude = lng.toString())
                 }
 
                 val body = PostCreateDto(
+                    id = postId?.toLongOrNull(),
                     content = content,
-                    coords = coords,
+                    coords = coordsDto,
                     attachment = attachment,
                     mentionIds = mentionIds
                 )
 
+                val response = apiService.createPost(body)
+
+                if (!response.isSuccessful) {
+                    throw Exception("сервер вернул код " + response.code())
+                }
                 _saved.value = true
             } catch (cancellation: CancellationException) {
                 throw cancellation
