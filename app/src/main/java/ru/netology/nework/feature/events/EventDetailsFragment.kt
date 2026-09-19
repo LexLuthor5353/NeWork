@@ -84,7 +84,7 @@ class EventDetailsFragment : Fragment() {
         binding.eventDetailsType.text = type
         binding.eventDetailsJob.text = job
 
-        val formatter = DateTimeFormatter.ofPattern("dd.MM.yy HH:mm", Locale.getDefault())
+        val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm", Locale.getDefault())
 
         if (publishedAt > 0) {
             binding.eventDetailsPublished.text = formatter.format(

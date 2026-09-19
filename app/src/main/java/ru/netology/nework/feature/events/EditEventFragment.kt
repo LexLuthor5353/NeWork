@@ -52,6 +52,8 @@ class EditEventFragment : Fragment(R.layout.fragment_edit_event) {
     private var eventDateMillis: Long? = null
     private var currentLat: Double? = null
     private var currentLng: Double? = null
+    private var existingAttachmentUrl: String? = null
+    private var existingAttachmentType: String? = null
 
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
@@ -117,6 +119,13 @@ class EditEventFragment : Fragment(R.layout.fragment_edit_event) {
         val initialEventAt = arguments?.getLong("eventAt", 0L) ?: 0L
         val initialLat = arguments?.getDouble("lat")
         val initialLng = arguments?.getDouble("lng")
+        existingAttachmentUrl = arguments?.getString("attachmentUrl")
+        existingAttachmentType = arguments?.getString("attachmentType")
+        val initialSpeakers = arguments?.getStringArrayList("speakerIds")
+
+        if (initialSpeakers != null) {
+            selectedSpeakerUserIds.addAll(initialSpeakers)
+        }
 
         binding.editEventText.setText(initialContent)
 
@@ -138,6 +147,21 @@ class EditEventFragment : Fragment(R.layout.fragment_edit_event) {
             currentLng = initialLng
         }
         updateLocationText()
+        updateSpeakersText()
+
+        if (existingAttachmentUrl != null) {
+            binding.editEventAttachmentBlock.visibility = View.VISIBLE
+            if (existingAttachmentType == "IMAGE" || existingAttachmentType == "VIDEO") {
+                binding.editEventAttachmentPreview.visibility = View.VISIBLE
+                Glide.with(this)
+                    .load(existingAttachmentUrl)
+                    .centerCrop()
+                    .into(binding.editEventAttachmentPreview)
+            } else {
+                binding.editEventAttachmentPreview.visibility = View.VISIBLE
+                binding.editEventAttachmentPreview.setImageDrawable(null)
+            }
+        }
 
         requireActivity().addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
@@ -357,6 +381,8 @@ class EditEventFragment : Fragment(R.layout.fragment_edit_event) {
 
     private fun showAttachment(uri: Uri) {
         attachmentUri = uri
+        existingAttachmentUrl = null
+        existingAttachmentType = null
         val mimeType = FilePartUtils.getMimeType(requireContext(), uri)
         binding.editEventAttachmentBlock.visibility = View.VISIBLE
 
@@ -374,6 +400,8 @@ class EditEventFragment : Fragment(R.layout.fragment_edit_event) {
 
     private fun clearAttachment() {
         attachmentUri = null
+        existingAttachmentUrl = null
+        existingAttachmentType = null
         binding.editEventAttachmentBlock.visibility = View.GONE
         binding.editEventAttachmentPreview.setImageDrawable(null)
     }
@@ -399,7 +427,9 @@ class EditEventFragment : Fragment(R.layout.fragment_edit_event) {
             lat = currentLat,
             lng = currentLng,
             attachmentUri = attachmentUri,
-            speakerUserIds = selectedSpeakerUserIds
+            speakerUserIds = selectedSpeakerUserIds,
+            existingAttachmentUrl = existingAttachmentUrl,
+            existingAttachmentType = existingAttachmentType
         )
     }
 

@@ -180,16 +180,43 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
     }
 
     private fun showEventMenu(event: Event) {
-        val menuItems = arrayOf("Удалить")
+        val menuItems = arrayOf("Редактировать", "Удалить")
         AlertDialog.Builder(requireContext())
             .setTitle("действия с событием")
-            .setItems(menuItems) { _, _ ->
-                deleteEvent(event)
+            .setItems(menuItems) { _, which ->
+                if (which == 0) {
+                    editEvent(event)
+                } else {
+                    deleteEvent(event)
+                }
             }
             .show()
     }
 
-    //Не нашел энпоинт редактирования как жить дальше
+    private fun editEvent(event: Event) {
+        val fragment = EditEventFragment()
+        val arguments = Bundle()
+        arguments.putString("eventId", event.id)
+        arguments.putString("content", event.content)
+        arguments.putString("type", event.type.name)
+        arguments.putLong("eventAt", event.eventAt ?: 0L)
+        event.coords?.let { coords ->
+            arguments.putDouble("lat", coords.lat)
+            arguments.putDouble("lng", coords.lng)
+        }
+        if (event.attachment != null) {
+            arguments.putString("attachmentUrl", event.attachment.url)
+            arguments.putString("attachmentType", event.attachment.type.name)
+        }
+        if (event.speakerIds != null && event.speakerIds.isNotEmpty()) {
+            arguments.putStringArrayList("speakerIds", ArrayList(event.speakerIds))
+        }
+        fragment.arguments = arguments
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.container, fragment)
+            .addToBackStack("edit_event")
+            .commit()
+    }
 
     private fun deleteEvent(event: Event) {
         AlertDialog.Builder(requireContext())
@@ -226,4 +253,3 @@ class EventsFragment : Fragment(R.layout.fragment_events) {
         _binding = null
     }
 }
-

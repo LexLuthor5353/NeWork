@@ -46,10 +46,12 @@ data class Post(
     val likedByMe: Boolean?
 ) {
     val publishedFormatted: String
-        get() = publishedAt?.let {
+        get() = if (publishedAt != null) {
             val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm", Locale.getDefault())
-            formatter.format(Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDateTime())
-        } ?: ""
+            formatter.format(Instant.ofEpochMilli(publishedAt).atZone(ZoneId.systemDefault()).toLocalDateTime())
+        } else {
+            ""
+        }
 
     val authorDisplay: User
         get() = User(authorId, "", authorName ?: "без имени", authorAvatarUrl)
@@ -76,16 +78,20 @@ data class Event(
     val likedByMe: Boolean?
 ) {
     val publishedFormatted: String
-        get() = publishedAt?.let {
-            val formatter = DateTimeFormatter.ofPattern("dd.MM.yy HH:mm", Locale.getDefault())
-            formatter.format(Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDateTime())
-        } ?: ""
+        get() = if (publishedAt != null) {
+            val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm", Locale.getDefault())
+            formatter.format(Instant.ofEpochMilli(publishedAt).atZone(ZoneId.systemDefault()).toLocalDateTime())
+        } else {
+            ""
+        }
 
     val eventAtFormatted: String
-        get() = publishedAt?.let {
-            val formatter = DateTimeFormatter.ofPattern("dd.MM.yy HH:mm", Locale.getDefault())
-            formatter.format(Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDateTime())
-        } ?: ""
+        get() = if (eventAt != null) {
+            val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm", Locale.getDefault())
+            formatter.format(Instant.ofEpochMilli(eventAt).atZone(ZoneId.systemDefault()).toLocalDateTime())
+        } else {
+            ""
+        }
 
     val typeFormatted: String
         get() = when (type) {

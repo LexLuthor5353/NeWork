@@ -1,32 +1,18 @@
 package ru.netology.nework.core.config
 
-import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
-import java.util.Properties
+import ru.netology.nework.BuildConfig
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class AppSecrets @Inject constructor(
-    @ApplicationContext context: Context
-) {
-
-    private val properties = Properties()
-
-    init {
-        val inputStream = context.assets.open("secrets.properties")
-        inputStream.use { stream ->
-            properties.load(stream)
-        }
-    }
+class AppSecrets @Inject constructor() {
 
     val baseUrl: String
-        get() = properties.getProperty("BASE_URL")?.trim() ?: ""
+        get() = BuildConfig.BASE_URL
 
     val apiKey: String
-        get() = properties.getProperty("API_KEY")?.trim() ?: ""
+        get() = BuildConfig.API_KEY
 
     val mapsApiKey: String
-        get() = properties.getProperty("MAPS_API_KEY")?.trim() ?: ""
-
+        get() = BuildConfig.MAPS_API_KEY
 }

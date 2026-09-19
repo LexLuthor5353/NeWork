@@ -143,7 +143,7 @@ class PostDetailsFragment : Fragment() {
         }
 
         if (publishedAt > 0) {
-            val formatter = DateTimeFormatter.ofPattern("dd.MM.yy HH:mm", Locale.getDefault())
+            val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm", Locale.getDefault())
             binding.postDetailsPublished.text = formatter.format(
                 Instant.ofEpochMilli(publishedAt).atZone(ZoneId.systemDefault()).toLocalDateTime()
             )

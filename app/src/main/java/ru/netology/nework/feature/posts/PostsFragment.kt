@@ -204,6 +204,10 @@ class PostsFragment : Fragment(R.layout.fragment_posts) {
             arguments.putDouble("lat", coords.lat)
             arguments.putDouble("lng", coords.lng)
         }
+        if (post.attachment != null) {
+            arguments.putString("attachmentUrl", post.attachment.url)
+            arguments.putString("attachmentType", post.attachment.type.name)
+        }
         fragment.arguments = arguments
         parentFragmentManager.beginTransaction()
             .replace(R.id.container, fragment)
@@ -249,4 +253,3 @@ class PostsFragment : Fragment(R.layout.fragment_posts) {
         _binding = null
     }
 }
-//без бутылки не разобраться уже

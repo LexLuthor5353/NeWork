@@ -1,3 +1,12 @@
+
+import java.util.Properties
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -19,6 +28,14 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val baseUrl = localProperties.getProperty("BASE_URL") ?: ""
+        val apiKey = localProperties.getProperty("API_KEY") ?: ""
+        val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: ""
+
+        buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
+        buildConfigField("String", "API_KEY", "\"$apiKey\"")
+        buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
     }
 
     buildTypes {
@@ -38,18 +55,9 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        viewBinding = true
+        buildConfig = true
     }
-}
-
-tasks.register<Copy>("copySecretsToAssets") {
-    val secretsFile = rootProject.file("secrets.properties")
-    from(secretsFile)
-    into(layout.projectDirectory.dir("src/main/assets"))
-    onlyIf { secretsFile.exists() }
-}
-
-tasks.named("preBuild") {
-    dependsOn("copySecretsToAssets")
 }
 
 dependencies {

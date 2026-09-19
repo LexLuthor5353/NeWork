@@ -14,6 +14,9 @@ import java.util.Properties
 class NeWorkApp : Application() {
 
     override fun onCreate() {
+        if (BuildConfig.MAPS_API_KEY.isNotEmpty()) {
+            MapKitFactory.setApiKey(BuildConfig.MAPS_API_KEY)
+        }
         super.onCreate()
 
         val properties = Properties()

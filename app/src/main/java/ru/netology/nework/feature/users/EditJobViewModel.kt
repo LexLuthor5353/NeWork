@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import ru.netology.nework.core.session.TokenStore
+import java.time.Instant
 import javax.inject.Inject
 
 @HiltViewModel
@@ -37,8 +38,31 @@ class EditJobViewModel @Inject constructor(
             _loading.value = true
             _errorMessage.value = null
             _saved.value = false
+            try {
+                val start = if (startAt != null) {
+                    Instant.ofEpochMilli(startAt).toString()
+                } else {
+                    Instant.now().toString()
+                }
+                val finish = if (finishAt != null) {
+                    Instant.ofEpochMilli(finishAt).toString()
+                } else {
+                    null
+                }
+
+                usersRepository.createJob(
+                    id = jobId?.toLongOrNull(),
+                    name = company,
+                    position = position,
+                    link = link,
+                    startAt = start,
+                    finishAt = finish
+                )
+                _saved.value = true
+            } catch (exception: Exception) {
+                _errorMessage.value = exception.message ?: "не удалось сохранить"
+            }
             _loading.value = false
         }
     }
 }
-//баг 11.1

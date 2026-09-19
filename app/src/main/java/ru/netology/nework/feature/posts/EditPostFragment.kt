@@ -46,6 +46,8 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
     private var cameraPhotoUri: Uri? = null
     private var pendingStorageAction: (() -> Unit)? = null
     private var selectedMentionUserIds: MutableList<String> = mutableListOf()
+    private var existingAttachmentUrl: String? = null
+    private var existingAttachmentType: String? = null
 
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
@@ -109,9 +111,25 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
         val initialContent = arguments?.getString("content").orEmpty()
         currentLat = arguments?.getDouble("lat")
         currentLng = arguments?.getDouble("lng")
+        existingAttachmentUrl = arguments?.getString("attachmentUrl")
+        existingAttachmentType = arguments?.getString("attachmentType")
 
         binding.editPostText.setText(initialContent)
         updateLocationText()
+
+        if (existingAttachmentUrl != null) {
+            binding.editPostAttachmentBlock.visibility = View.VISIBLE
+            if (existingAttachmentType == "IMAGE" || existingAttachmentType == "VIDEO") {
+                binding.editPostAttachmentPreview.visibility = View.VISIBLE
+                Glide.with(this)
+                    .load(existingAttachmentUrl)
+                    .centerCrop()
+                    .into(binding.editPostAttachmentPreview)
+            } else {
+                binding.editPostAttachmentPreview.visibility = View.VISIBLE
+                binding.editPostAttachmentPreview.setImageDrawable(null)
+            }
+        }
 
         requireActivity().addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
@@ -282,6 +300,8 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
 
     private fun showAttachment(uri: Uri) {
         attachmentUri = uri
+        existingAttachmentUrl = null
+        existingAttachmentType = null
         val mimeType = FilePartUtils.getMimeType(requireContext(), uri)
         binding.editPostAttachmentBlock.visibility = View.VISIBLE
 
@@ -299,6 +319,8 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
 
     private fun clearAttachment() {
         attachmentUri = null
+        existingAttachmentUrl = null
+        existingAttachmentType = null
         binding.editPostAttachmentBlock.visibility = View.GONE
         binding.editPostAttachmentPreview.setImageDrawable(null)
     }
@@ -315,7 +337,9 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
             lat = currentLat,
             lng = currentLng,
             attachmentUri = attachmentUri,
-            mentionUserIds = selectedMentionUserIds
+            mentionUserIds = selectedMentionUserIds,
+            existingAttachmentUrl = existingAttachmentUrl,
+            existingAttachmentType = existingAttachmentType
         )
     }
 

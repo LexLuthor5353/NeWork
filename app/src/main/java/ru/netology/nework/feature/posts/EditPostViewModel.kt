@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import ru.netology.nework.core.network.ApiService
 import ru.netology.nework.core.network.dto.AttachmentDto
+import ru.netology.nework.core.network.dto.AttachmentTypeDto
 import ru.netology.nework.core.network.dto.CoordsDto
 import ru.netology.nework.core.network.dto.PostCreateDto
 import ru.netology.nework.core.util.FilePartUtils
@@ -40,7 +41,9 @@ class EditPostViewModel @Inject constructor(
         lat: Double?,
         lng: Double?,
         attachmentUri: Uri? = null,
-        mentionUserIds: List<String> = emptyList()
+        mentionUserIds: List<String> = emptyList(),
+        existingAttachmentUrl: String? = null,
+        existingAttachmentType: String? = null
     ) {
         viewModelScope.launch {
             _loading.value = true
@@ -68,6 +71,11 @@ class EditPostViewModel @Inject constructor(
                     attachment = AttachmentDto(
                         url = uploadBody.url,
                         type = FilePartUtils.getAttachmentType(mimeType)
+                    )
+                } else if (existingAttachmentUrl != null && existingAttachmentType != null) {
+                    attachment = AttachmentDto(
+                        url = existingAttachmentUrl,
+                        type = AttachmentTypeDto.valueOf(existingAttachmentType)
                     )
                 }
 

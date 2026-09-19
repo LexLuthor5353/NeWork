@@ -66,6 +66,7 @@ class UsersRepository @Inject constructor(
     }
 
     suspend fun createJob(
+        id: Long? = null,
         name: String,
         position: String,
         link: String?,
@@ -74,6 +75,7 @@ class UsersRepository @Inject constructor(
     ) {
         val response = apiService.createJob(
             JobCreateDto(
+                id = id,
                 name = name,
                 position = position,
                 link = link,
